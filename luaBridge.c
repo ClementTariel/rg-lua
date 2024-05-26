@@ -25,8 +25,10 @@ void popStateBridge(void* pl, int idx){
 
 lua_State* newStateBridgeBridge() {
 	lua_State* pl = luaL_newstate();
-	luaopen_table(pl);
-	luaopen_math(pl);
+	luaL_requiref(pl, "table", luaopen_table, 1);
+	lua_pop(pl, 1);
+	luaL_requiref(pl, "math", luaopen_math, 1);
+	lua_pop(pl, 1);
     return pl;
 }
 
