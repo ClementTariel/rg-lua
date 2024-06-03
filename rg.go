@@ -209,14 +209,14 @@ func GetLoadActScript() string {
 	return `__RG_CORE_SYSTEM = {act = act}`
 }
 
-func InitRG(pl unsafe.Pointer, script string, filename string) error {
+func InitRG(pl unsafe.Pointer, script string, fileName string) error {
 	var err error
-	err = RunScript(pl, GetInitialisationScript(), "[Initilisation Script]")
+	err = RunScript(pl, GetInitialisationScript(), "[Initialisation Script]")
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		return err
 	}
-	err = RunScript(pl, testScript, fileName)
+	err = RunScript(pl, script, fileName)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		return err
