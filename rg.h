@@ -1,3 +1,6 @@
+#ifndef RG_H
+#define RG_H
+
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
@@ -25,3 +28,5 @@ void* get_action_wrapper(void* pparams);
 void* timeout_function(void* ptimeout);
 
 int getActionWithTimeoutBridge(void* pl, void* paction, int timeout);
+
+#endif

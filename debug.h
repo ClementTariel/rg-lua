@@ -1,16 +1,22 @@
+#ifndef DEBUG_H
+#define DEBUG_H
+
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-#include <stdbool.h>
+#include "custom_string.h"
+#include "string_array.h"
 
-char* copy_string(const char* original_string, bool add_quote, size_t* psize, size_t budget);
+String copy_string(const char* original_string, bool add_quote, size_t* pbudget);
 
-char* int_to_string(int n, size_t* psize, size_t budget);
+String int_to_string(int n, size_t* pbudget);
 
-char* float_to_string(float x, size_t* psize, size_t budget);
+String float_to_string(float x, size_t* pbudget);
 
-char* stringify_list_to_map(char** values_as_str, int values_count, size_t* psize, size_t budget);
+String stringify_list_to_map(StringArray* values_as_str, size_t* pbudget);
 
-char* luaValueToString(lua_State* pl, int idx, int depth, size_t* psize, size_t budget);
+String luaValueToString(lua_State* pl, int idx, int depth, size_t* pbudget);
 
 int printInLua(lua_State* pl);
+
+#endif

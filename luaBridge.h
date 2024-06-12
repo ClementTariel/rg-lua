@@ -1,3 +1,6 @@
+#ifndef LUA_BRIDGE_H
+#define LUA_BRIDGE_H
+
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
@@ -23,3 +26,5 @@ void setGlobalBridge(void* pl, const char *name);
 int loadStringBridge(void* pl, const char *s);
 
 int pcallBridge(void* pl, int nargs, int nresults, int msgh);
+
+#endif
