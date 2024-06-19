@@ -104,7 +104,7 @@ func PushFunction(pl unsafe.Pointer, pfn unsafe.Pointer, name string) {
 
 func RunScript(pl unsafe.Pointer, script string, fileName string) error {
 	var res int
-	fmt.Printf("Running %s\n", fileName)
+	VPrintf("Running %s\n", fileName)
 	// Add "\n" as a quick fix to allow lazy error handling
 	res = int(C.loadStringBridge(pl, C.CString("\n"+script)))
 	if res != LUA_OK {

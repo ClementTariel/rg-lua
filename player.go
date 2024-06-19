@@ -49,7 +49,7 @@ __RG_CORE_SYSTEM.self.y = %[4]d
 		fmt.Sprintf("[loading self data - bot %d]", bot.id))
 }
 
-func PlayTurn(pl unsafe.Pointer, turn int, allies map[int]Bot, enemies []Bot, warningCount int) (map[int]Action, int) {
+func PlayTurn(pl unsafe.Pointer, turn int, allies []Bot, enemies []Bot, warningCount int) (map[int]Action, int) {
 	err := ResetGame(pl, turn)
 	if err != nil {
 		fmt.Printf("error when reseting game: %v\n", err)
@@ -76,9 +76,8 @@ func PlayTurn(pl unsafe.Pointer, turn int, allies map[int]Bot, enemies []Bot, wa
 			}
 		}
 	}
-	// TODO: randomize order
-	for id, bot := range allies {
-		actions[id] = Action{
+	for _, bot := range allies {
+		actions[bot.id] = Action{
 			actionType: SUICIDE,
 			x:          -1,
 			y:          -1,
@@ -92,7 +91,7 @@ func PlayTurn(pl unsafe.Pointer, turn int, allies map[int]Bot, enemies []Bot, wa
 			}
 			action, err := GetActionWithTimeout(pl, bot)
 
-			fmt.Printf("bot %d (%v) act (%d,%d,%d), %v\n", id, bot, action.actionType, action.x, action.y, err)
+			VPrintf("bot %d (%v) act (%d,%d,%d), %v\n", bot.id, bot, action.actionType, action.x, action.y, err)
 			if errors.Is(err, INVALID_MOVE_ERROR) {
 				action.actionType = GUARD
 				action.x = -1
@@ -109,7 +108,7 @@ func PlayTurn(pl unsafe.Pointer, turn int, allies map[int]Bot, enemies []Bot, wa
 			if warningCount > WARNING_TOLERANCE {
 				continue
 			}
-			actions[id] = action
+			actions[bot.id] = action
 		}
 	}
 	return actions, warningCount

@@ -13,11 +13,21 @@ import (
 )
 
 type (
-	ActionType C.int
-	Action     struct {
-		actionType ActionType
+	CAction struct {
+		actionType C.int
 		x          C.int
 		y          C.int
+	}
+	Location struct {
+		x int
+		y int
+	}
+	LocationType int
+	ActionType   int
+	Action       struct {
+		actionType ActionType
+		x          int
+		y          int
 	}
 	Bot struct {
 		x        int
@@ -25,6 +35,10 @@ type (
 		hp       int
 		id       int
 		playerId int
+	}
+	BotState struct {
+		bot    Bot
+		action Action
 	}
 	RGError struct {
 		Err  error
@@ -38,13 +52,17 @@ const (
 	GUARD
 	SUICIDE
 
+	INVALID LocationType = iota
+	NORMAL
+	SPAWN
+	OBSTACLE
+
 	GRID_SIZE = 19
 
 	SPAWN_DELAY       = 10
 	SPAWN_COUNT       = 5
 	MAX_HP            = 50
 	ATTACK_RANGE      = 1
-	SUICIDE_RANGE     = 1
 	ATTACK_DAMAGE_MIN = 8
 	ATTACK_DAMAGE_MAX = 10
 	COLLISION_DAMAGE  = 5
@@ -114,25 +132,35 @@ func Dist(x1, y1, x2, y2 int) float64 {
 }
 
 func GetActionWithTimeout(pl unsafe.Pointer, bot Bot) (Action, error) {
+	cAction := CAction{
+		actionType: (C.int)(SUICIDE),
+		x:          -1,
+		y:          -1,
+	}
 	action := Action{
 		actionType: SUICIDE,
 		x:          -1,
 		y:          -1,
 	}
 	var err error = nil
-	errCode := int(C.getActionWithTimeoutBridge(pl, unsafe.Pointer(&action), BOT_TIME_BUDGET))
+	errCode := int(C.getActionWithTimeoutBridge(pl, unsafe.Pointer(&cAction), BOT_TIME_BUDGET))
 	if errCode == 0 &&
-		action.actionType != MOVE &&
-		action.actionType != ATTACK &&
-		action.actionType != GUARD &&
-		action.actionType != SUICIDE {
+		ActionType(cAction.actionType) == MOVE ||
+		ActionType(cAction.actionType) == ATTACK ||
+		ActionType(cAction.actionType) == GUARD ||
+		ActionType(cAction.actionType) == SUICIDE {
+		action.actionType = ActionType(cAction.actionType)
+	} else {
 		errCode = 104
 	}
 	if errCode == 0 &&
-		action.x < 0 ||
-		action.x >= GRID_SIZE ||
-		action.y < 0 ||
-		action.y >= GRID_SIZE {
+		int(cAction.x) >= 0 &&
+		int(cAction.x) < GRID_SIZE &&
+		int(cAction.y) >= 0 &&
+		int(cAction.y) < GRID_SIZE {
+		action.x = int(cAction.x)
+		action.y = int(cAction.y)
+	} else {
 		action.x = -1
 		action.y = -1
 	}
@@ -158,14 +186,12 @@ func GetActionWithTimeout(pl unsafe.Pointer, bot Bot) (Action, error) {
 		return Action{actionType: SUICIDE, x: -1, y: -1}, err
 	}
 	if action.actionType == MOVE {
-		// TODO: replace out of bound moves with GUARD too
-		if WalkDist(bot.x, bot.y, int(action.x), int(action.y)) != 1 {
+		if WalkDist(bot.x, bot.y, action.x, action.y) != 1 {
 			action.actionType = GUARD
 			err = INVALID_MOVE_ERROR
 		}
-	}
-	if action.actionType == ATTACK {
-		attackRange := WalkDist(bot.x, bot.y, int(action.x), int(action.y))
+	} else if action.actionType == ATTACK {
+		attackRange := WalkDist(bot.x, bot.y, action.x, action.y)
 		if attackRange < 1 || attackRange > ATTACK_RANGE {
 			action.actionType = GUARD
 			err = INVALID_MOVE_ERROR
@@ -180,10 +206,10 @@ func GetActionWithTimeout(pl unsafe.Pointer, bot Bot) (Action, error) {
 
 func GetInitialisationScript() string {
 	c := fmt.Sprintf("%d", (GRID_SIZE-1)/2)
-	return `MOVE = 0
-ATTACK = 1
-GUARD = 2
-SUICIDE = 3
+	return `MOVE = ` + fmt.Sprintf("%d", MOVE) + `
+ATTACK = ` + fmt.Sprintf("%d", ATTACK) + `
+GUARD = ` + fmt.Sprintf("%d", GUARD) + `
+SUICIDE = ` + fmt.Sprintf("%d", SUICIDE) + `
 rg = {
 	CENTER_POINT = { x=` + c + `, y=` + c + `},
 	GRID_SIZE = ` + fmt.Sprintf("%d", GRID_SIZE) + `,
@@ -196,7 +222,6 @@ rg = {
 			min=` + fmt.Sprintf("%d", ATTACK_DAMAGE_MIN) + `,
 			max=` + fmt.Sprintf("%d", ATTACK_DAMAGE_MAX) + `
 		},
-		suicide_range = ` + fmt.Sprintf("%d", SUICIDE_RANGE) + `,
 		suicide_damage = ` + fmt.Sprintf("%d", SUICIDE_DAMAGE) + `,
 		collision_damage = ` + fmt.Sprintf("%d", COLLISION_DAMAGE) + `,
 		max_turn = ` + fmt.Sprintf("%d", MAX_TURN) + `
