@@ -181,21 +181,44 @@ func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]BotState, error
 		}
 
 		// Get actions
+		var actions1 map[int]Action
+		if warningCount1 > WARNING_TOLERANCE {
+			actions1 = map[int]Action{}
+			for _, bot := range Allies(1, allBots) {
+				actions1[bot.id] = Action{
+					actionType: SUICIDE,
+					x:          -1,
+					y:          -1,
+				}
+			}
+		} else {
+			actions1, warningCount1 = PlayTurn(
+				pl1,
+				turn,
+				Allies(1, allBots),
+				Enemies(1, allBots),
+				warningCount1)
+		}
 
-		actions1, newWarningCount1 := PlayTurn(
-			pl1,
-			turn,
-			Allies(1, allBots),
-			Enemies(1, allBots),
-			warningCount1)
-		warningCount1 = newWarningCount1
-		actions2, newWarningCount2 := PlayTurn(
-			pl2,
-			turn,
-			Allies(2, allBots),
-			Enemies(2, allBots),
-			warningCount2)
-		warningCount2 = newWarningCount2
+		var actions2 map[int]Action
+		if warningCount2 > WARNING_TOLERANCE {
+			actions2 = map[int]Action{}
+			for _, bot := range Allies(2, allBots) {
+				actions2[bot.id] = Action{
+					actionType: SUICIDE,
+					x:          -1,
+					y:          -1,
+				}
+			}
+		} else {
+			actions2, warningCount2 = PlayTurn(
+				pl2,
+				turn,
+				Allies(2, allBots),
+				Enemies(2, allBots),
+				warningCount2)
+		}
+
 		// Add actions to game state
 		currentGameState := map[int]BotState{}
 		for _, bot := range allBots {
