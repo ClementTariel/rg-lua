@@ -3,30 +3,37 @@
 #include "debug.h"
 #include "rg.h"
 
-int get_action(void* pl, void* paction) {
+int get_action(void* pl, void* paction, int bot_id) {
     int clean_stack_size = lua_gettop(pl);
     int err = 0;
     // __RG_CORE_SYSTEM is used as a buffer to simplify data transfer
     lua_getglobal((lua_State*) pl, "__RG_CORE_SYSTEM");
     if (!lua_istable(pl, -1)){
+        (pl, lua_gettop(pl) - clean_stack_size);
+        return 101;
+    }
+    lua_getfield(pl, -1, "self");
+    if (!lua_istable(pl, -1)){
         lua_pop(pl, lua_gettop(pl) - clean_stack_size);
         return 101;
     }
-    lua_getfield(pl, -1, "act");
+    lua_geti(pl, -1, bot_id);
+    if (!lua_istable(pl, -1)){
+        lua_pop(pl, lua_gettop(pl) - clean_stack_size);
+        return 101;
+    }
+    lua_getfield(pl, -3, "act");
     if (!lua_isfunction(pl, -1)){
         lua_pop(pl, lua_gettop(pl) - clean_stack_size);
         return 102;
     }
-    lua_getfield(pl, -2, "self");
+    lua_pushvalue(pl, -2);
+    lua_getfield(pl, -5, "game");
     if (!lua_istable(pl, -1)){
         lua_pop(pl, lua_gettop(pl) - clean_stack_size);
         return 101;
     }
-    lua_getfield(pl, -3, "game");
-    if (!lua_istable(pl, -1)){
-        lua_pop(pl, lua_gettop(pl) - clean_stack_size);
-        return 101;
-    }
+
     err = lua_pcall(pl, 2, 1, 0); // 2 arguments, one result
     if (err != 0){
         lua_pop(pl, lua_gettop(pl) - clean_stack_size);
@@ -75,10 +82,11 @@ void* get_action_wrapper(void* pparams){
     get_action_thread_params params = *(get_action_thread_params*)pparams;
     void* pl = params.pl;
     void* paction = params.paction;
+    int bot_id = params.bot_id;
     int* perr = params.perr;
     bool* pdone = params.pdone;
     pthread_t timeout_thread_id = params.timeout_thread_id;
-    int err = get_action(pl, paction);
+    int err = get_action(pl, paction, bot_id);
     *perr = err;
     *pdone = true;
     pthread_cancel(timeout_thread_id);
@@ -95,7 +103,7 @@ void* timeout_function(void* ptimeout){
 }
 
 
-int getActionWithTimeoutBridge(void* pl, void* paction, int timeout) {
+int getActionWithTimeoutBridge(void* pl, void* paction, int bot_id, int timeout) {
     bool done = false;
     
     pthread_t timeout_thread_id;
@@ -107,6 +115,7 @@ int getActionWithTimeoutBridge(void* pl, void* paction, int timeout) {
     get_action_thread_params params;
     params.pl = pl;
     params.paction = paction;
+    params.bot_id = bot_id;
     params.perr = &err;
     params.pdone = &done;
     params.timeout_thread_id = timeout_thread_id;

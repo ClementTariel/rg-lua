@@ -143,7 +143,7 @@ func GetActionWithTimeout(pl unsafe.Pointer, bot Bot) (Action, error) {
 		y:          -1,
 	}
 	var err error = nil
-	errCode := int(C.getActionWithTimeoutBridge(pl, unsafe.Pointer(&cAction), BOT_TIME_BUDGET))
+	errCode := int(C.getActionWithTimeoutBridge(pl, unsafe.Pointer(&cAction), C.int(bot.id), BOT_TIME_BUDGET))
 	if errCode == 0 &&
 		ActionType(cAction.actionType) == MOVE ||
 		ActionType(cAction.actionType) == ATTACK ||
@@ -227,11 +227,13 @@ rg = {
 		max_turn = ` + fmt.Sprintf("%d", MAX_TURN) + `
 	}
 }
+__RG_CORE_SYSTEM = {}
+__RG_CORE_SYSTEM["self"] = {}
 `
 }
 
 func GetLoadActScript() string {
-	return `__RG_CORE_SYSTEM = {act = act}`
+	return `__RG_CORE_SYSTEM["act"] = act`
 }
 
 func InitRG(pl unsafe.Pointer, script string, fileName string) error {

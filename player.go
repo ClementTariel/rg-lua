@@ -38,14 +38,18 @@ __RG_CORE_SYSTEM.game[%[1]d][%[2]d].id = %[5]s
 }
 
 func LoadSelf(pl unsafe.Pointer, bot Bot) error {
-	const loadScript = `__RG_CORE_SYSTEM.self = {}
-__RG_CORE_SYSTEM.self.id = %[1]d
-__RG_CORE_SYSTEM.self.hp = %[2]d
-__RG_CORE_SYSTEM.self.x = %[3]d
-__RG_CORE_SYSTEM.self.y = %[4]d
+	const loadScript = `if __RG_CORE_SYSTEM.self[%[5]d] == nil then
+	__RG_CORE_SYSTEM.self[%[5]d] = {}
+end
+__RG_CORE_SYSTEM.self[%[5]d].id = %[5]d
+__RG_CORE_SYSTEM.self[%[5]d].x = %[1]d
+__RG_CORE_SYSTEM.self[%[5]d].y = %[2]d
+__RG_CORE_SYSTEM.self[%[5]d].hp = %[3]d
+__RG_CORE_SYSTEM.self[%[5]d].player_id = %[4]d
+__RG_CORE_SYSTEM.self[%[5]d].id = %[5]d
 `
 	return RunScript(pl,
-		fmt.Sprintf(loadScript, bot.id, bot.hp, bot.x, bot.y),
+		fmt.Sprintf(loadScript, bot.x, bot.y, bot.hp, bot.playerId, bot.id),
 		fmt.Sprintf("[loading self data - bot %d]", bot.id))
 }
 

@@ -16,17 +16,18 @@ struct Action {
 typedef struct get_action_thread_params {
     void* pl;
     void* paction;
+    int bot_id;
     int* perr;
     bool* pdone;
     pthread_t timeout_thread_id;
 } get_action_thread_params;
 
-int get_action(void* pl, void* paction);
+int get_action(void* pl, void* paction, int bot_id);
 
 void* get_action_wrapper(void* pparams);
 
 void* timeout_function(void* ptimeout);
 
-int getActionWithTimeoutBridge(void* pl, void* paction, int timeout);
+int getActionWithTimeoutBridge(void* pl, void* paction, int bot_id, int timeout);
 
 #endif
