@@ -1,12 +1,11 @@
 function act(self, game)
-	d = math.random(0,11)
-    if (d < 4) then
+	d = math.random(1,12)
+    if (d <= 4) then
         return { actionType=GUARD } 
     end
-	x = self.location.x + (d%2) * ((d-2)%4)
-	y = self.location.y + ((d+1)%2) * ((d-1)%4)
-    if (d < 8) then
-        return  { actionType=MOVE, x=x, y=y } 
+    loc = rg.locs_around(self.location)[1+(d%4)]
+    if (d <= 8) then
+        return  { actionType=MOVE, x=loc.x, y=loc.y } 
     end
-	return { actionType=ATTACK, x=x, y=y } 
+	return { actionType=ATTACK, x=loc.x, y=loc.y } 
 end

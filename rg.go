@@ -227,6 +227,13 @@ rg = {
 		max_turn = ` + fmt.Sprintf("%d", MAX_TURN) + `
 	},
 }
+
+rg.wdist = _rg_walk_dist
+_rg_walk_dist = nil
+
+rg.locs_around = _rg_locs_around
+_rg_locs_around = nil
+
 __RG_CORE_SYSTEM = { 
 	self = {}
 }
@@ -239,6 +246,8 @@ func GetLoadActScript() string {
 
 func InitRG(pl unsafe.Pointer, script string, fileName string) error {
 	var err error
+	PushFunction(pl, unsafe.Pointer(C.rgLocsAroundInLua), "_rg_locs_around")
+	PushFunction(pl, unsafe.Pointer(C.rgWalkDistInLua), "_rg_walk_dist")
 	err = RunScript(pl, GetInitialisationScript(), "[Initialisation Script]")
 	if err != nil {
 		fmt.Printf("%v\n", err)

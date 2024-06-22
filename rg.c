@@ -75,7 +75,6 @@ int get_action(void* pl, void* paction, int bot_id) {
     return err;
 }
 
-
 void* get_action_wrapper(void* pparams){
     // allow cancel when stuck in infinite loop
     pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS,NULL);
@@ -101,7 +100,6 @@ void* timeout_function(void* ptimeout){
     nanosleep(&ts, NULL);
     return NULL;
 }
-
 
 int getActionWithTimeoutBridge(void* pl, void* paction, int bot_id, int timeout) {
     bool done = false;
@@ -131,4 +129,70 @@ int getActionWithTimeoutBridge(void* pl, void* paction, int bot_id, int timeout)
     }
     pthread_join(action_thread_id, NULL);
     return err;
+}
+
+int rgWalkDistInLua(lua_State* pl) {
+    int argc = lua_gettop(pl);
+    if (argc != 2){
+        return 0;
+    }
+    if (!(lua_istable(pl, 1) && lua_istable(pl, 2)) ) {
+        return 0;
+    }
+    lua_getfield(pl, 1, "x");
+    if (!lua_isnumber(pl, -1)){
+        lua_pop(pl, lua_gettop(pl) - argc);
+        return 0;
+    }
+    int x1 = lua_tointeger(pl, -1);
+    lua_getfield(pl, 1, "y");
+    if (!lua_isnumber(pl, -1)){
+        lua_pop(pl, lua_gettop(pl) - argc);
+        return 0;
+    }
+    int y1 = lua_tointeger(pl, -1);
+    lua_getfield(pl, 2, "x");
+    if (!lua_isnumber(pl, -1)){
+        lua_pop(pl, lua_gettop(pl) - argc);
+        return 0;
+    }
+    int x2 = lua_tointeger(pl, -1);
+    lua_getfield(pl, 2, "y");
+    if (!lua_isnumber(pl, -1)){
+        lua_pop(pl, lua_gettop(pl) - argc);
+        return 0;
+    }
+    int y2 = lua_tointeger(pl, -1);
+    int d = abs(x1 - x2) + abs(y1 - y2);
+    lua_pushinteger(pl, d);
+    return 1;
+}
+
+int rgLocsAroundInLua(lua_State* pl) {
+    int argc = lua_gettop(pl);
+    if (argc != 1){
+        return 0;
+    }
+    lua_getfield(pl, 1, "x");
+    if (!lua_isnumber(pl, -1)){
+        lua_pop(pl, lua_gettop(pl) - argc);
+        return 0;
+    }
+    int x = lua_tointeger(pl, -1);
+    lua_getfield(pl, 1, "y");
+    if (!lua_isnumber(pl, -1)){
+        lua_pop(pl, lua_gettop(pl) - argc);
+        return 0;
+    }
+    int y = lua_tointeger(pl, -1);
+    lua_createtable(pl, 4, 0);
+    for (int i=0; i<4; i++){
+        lua_createtable(pl, 2, 0);
+        lua_pushinteger(pl, x + (i%2) * ((i-2)%4));
+        lua_setfield(pl, -2, "x");
+        lua_pushinteger(pl, y + ((i+1)%2) * ((i-1)%4));
+        lua_setfield(pl, -2, "y");
+        lua_seti(pl, -2, i + 1);
+    }
+    return 1;
 }
