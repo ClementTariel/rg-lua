@@ -21,12 +21,12 @@ func LoadGameBot(pl unsafe.Pointer, bot Bot) error {
 	if (bot.id) > 0 {
 		botId = fmt.Sprintf("%d", bot.id)
 	}
-	const loadScript = `__RG_CORE_SYSTEM.game[%[1]d][%[2]d] = {}
-__RG_CORE_SYSTEM.game[%[1]d][%[2]d].x = %[1]d
-__RG_CORE_SYSTEM.game[%[1]d][%[2]d].y = %[2]d
-__RG_CORE_SYSTEM.game[%[1]d][%[2]d].hp = %[3]d
-__RG_CORE_SYSTEM.game[%[1]d][%[2]d].player_id = %[4]d
-__RG_CORE_SYSTEM.game[%[1]d][%[2]d].id = %[5]s
+	const loadScript = `__RG_CORE_SYSTEM.game[%[1]d][%[2]d] = {
+	location = { x=%[1]d, y=%[2]d },
+	hp = %[3]d,
+	player_id = %[4]d,
+	id = %[5]s,
+}
 `
 	botDescription := fmt.Sprintf("bot %s", botId)
 	if botId == "nil" {
@@ -42,8 +42,7 @@ func LoadSelf(pl unsafe.Pointer, bot Bot) error {
 	__RG_CORE_SYSTEM.self[%[5]d] = {}
 end
 __RG_CORE_SYSTEM.self[%[5]d].id = %[5]d
-__RG_CORE_SYSTEM.self[%[5]d].x = %[1]d
-__RG_CORE_SYSTEM.self[%[5]d].y = %[2]d
+__RG_CORE_SYSTEM.self[%[5]d].location = { x=%[1]d, y = %[2]d }
 __RG_CORE_SYSTEM.self[%[5]d].hp = %[3]d
 __RG_CORE_SYSTEM.self[%[5]d].player_id = %[4]d
 __RG_CORE_SYSTEM.self[%[5]d].id = %[5]d

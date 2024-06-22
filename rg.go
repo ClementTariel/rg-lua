@@ -213,22 +213,23 @@ SUICIDE = ` + fmt.Sprintf("%d", SUICIDE) + `
 rg = {
 	CENTER_POINT = { x=` + c + `, y=` + c + `},
 	GRID_SIZE = ` + fmt.Sprintf("%d", GRID_SIZE) + `,
-	settings = {
+	SETTINGS = {
 		spawn_delay = ` + fmt.Sprintf("%d", SPAWN_DELAY) + `,
 		spawn_count = ` + fmt.Sprintf("%d", SPAWN_COUNT) + `,
 		robot_hp = ` + fmt.Sprintf("%d", MAX_HP) + `,
 		attack_range = ` + fmt.Sprintf("%d", ATTACK_RANGE) + `,
-		attack_damage = {
-			min=` + fmt.Sprintf("%d", ATTACK_DAMAGE_MIN) + `,
-			max=` + fmt.Sprintf("%d", ATTACK_DAMAGE_MAX) + `
-		},
+		attack_damage = { ` +
+		`min=` + fmt.Sprintf("%d", ATTACK_DAMAGE_MIN) + `, ` +
+		`max=` + fmt.Sprintf("%d", ATTACK_DAMAGE_MAX) +
+		` },
 		suicide_damage = ` + fmt.Sprintf("%d", SUICIDE_DAMAGE) + `,
 		collision_damage = ` + fmt.Sprintf("%d", COLLISION_DAMAGE) + `,
 		max_turn = ` + fmt.Sprintf("%d", MAX_TURN) + `
-	}
+	},
 }
-__RG_CORE_SYSTEM = {}
-__RG_CORE_SYSTEM["self"] = {}
+__RG_CORE_SYSTEM = { 
+	self = {}
+}
 `
 }
 
