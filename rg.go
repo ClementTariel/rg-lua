@@ -57,7 +57,8 @@ const (
 	SPAWN
 	OBSTACLE
 
-	GRID_SIZE = 19
+	GRID_SIZE    = 19
+	ARENA_RADIUS = (GRID_SIZE - 3) * 0.5
 
 	SPAWN_DELAY       = 10
 	SPAWN_COUNT       = 5
@@ -213,6 +214,7 @@ SUICIDE = ` + fmt.Sprintf("%d", SUICIDE) + `
 rg = {
 	CENTER_POINT = { x=` + c + `, y=` + c + `},
 	GRID_SIZE = ` + fmt.Sprintf("%d", GRID_SIZE) + `,
+	ARENA_RADIUS = ` + fmt.Sprintf("%f", ARENA_RADIUS) + `,
 	SETTINGS = {
 		spawn_delay = ` + fmt.Sprintf("%d", SPAWN_DELAY) + `,
 		spawn_count = ` + fmt.Sprintf("%d", SPAWN_COUNT) + `,

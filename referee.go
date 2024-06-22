@@ -128,10 +128,9 @@ func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]BotState, error
 	// TODO: precompute
 	spawnLocations := []Location{}
 	grid := map[Location]LocationType{}
-	radius := (GRID_SIZE - 3) * 0.5
 	center := (GRID_SIZE - 1) / 2
-	min2 := (radius - 0.5) * (radius - 0.5)
-	max2 := (radius + 0.5) * (radius + 0.5)
+	min2 := (ARENA_RADIUS - 0.5) * (ARENA_RADIUS - 0.5)
+	max2 := (ARENA_RADIUS + 0.5) * (ARENA_RADIUS + 0.5)
 	for i := 0; i < GRID_SIZE; i++ {
 		for j := 0; j < GRID_SIZE; j++ {
 			loc := Location{x: i, y: j}
