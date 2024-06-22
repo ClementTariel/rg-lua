@@ -12,7 +12,7 @@ The rebirth of robotgame but in lua instead of python.
 
 ## Requirement 
 
-You need [golang](https://go.dev/) 1.21.4.
+You need [golang](https://go.dev/) 1.21.4 and [lua 5.3](https://www.lua.org/versions.html#5.3).
 
 ## Getting started
 
@@ -76,7 +76,7 @@ an object `rg` is accessible by all robots, with the following properties :
 	- `collision_damage` : The damages dealt by a collision.
     - `max_turn` : The number of turns in a game.
 - `wdist(location1, location2)` : A function that returns the walking distance between location1  and location2.
-- ~~`locs_around(location)`~~ : A function that returns the list of locations around location. NOT WORKING PROPERLY YET
+- `locs_around(location)` : A function that returns the list of locations around location.
 
 ### Rules
 
