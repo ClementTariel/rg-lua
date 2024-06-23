@@ -60,20 +60,18 @@ void shrink_string_array(StringArray* ps, size_t* pbudget){
 }
 
 void expand_string_array(StringArray* ps, size_t* pbudget){
-      size_t previous_len = ps->len;
-      size_t old_allocated_size = sizeof(String*) * previous_len;
-      ps->len *= 2;
-      size_t allocated_size = sizeof(String*) * ps->len;
+      size_t old_allocated_size = sizeof(String*) * ps->len;
+      size_t allocated_size = old_allocated_size * 2;
       if (allocated_size < old_allocated_size || allocated_size >= *pbudget){
             free_string_array(ps, pbudget);
             return ;
       }
       String** realloc_data = realloc(ps->data, allocated_size);
       if (realloc_data == NULL){
-            ps->len = previous_len;
             free_string_array(ps, pbudget);
             return;
       }
+      ps->len *= 2;
       ps->data = realloc_data;
       *pbudget += old_allocated_size - allocated_size;
 }

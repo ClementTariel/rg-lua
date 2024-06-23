@@ -137,36 +137,39 @@ String luaValueToString(lua_State* pl, int idx, int depth, size_t* pbudget) {
                   // (avoid issue with lua_tostring that confuses lua_next)
                   lua_pushvalue(pl, -2);
                   // stack now contains: -1 => key; -2 => value; -3 => key; -4 => table
-                  int index = -1;
-                  if (lua_isinteger(pl, -1)){
-                        index = lua_tointeger(pl ,-1);
-                  }
-                  // lua indexes start at 1
-                  if (index > 0 && index == prev_index + 1) {
-                        // indexes seem to behave as if it is a list
-                        prev_index = index;
-                  } else {
-                        // inconsistency in indexes, it cannot be a list
-                        index = -1;
-                        prev_index = -1;
-                  }
-                  if (index > 0){
-                        // list
-                        String str_val = luaValueToString(pl, -2, depth+1, pbudget);
-                        if (is_null_string(str_val)){
-                              free_string_array(&values_as_str, pbudget);
-                              free_string(&total_str, pbudget);
-                              return (String){.text = NULL, .len = -1};
-                        }
-                        // pop value + copy of key, leaving original key
-                        lua_pop(pl,2);
-                        // stack now contains: -1 => key; -2 => table
-                        append_to_string_array(&values_as_str, &str_val, pbudget);
-                        if (values_as_str.data == NULL){
-                              free_string(&total_str, pbudget);
-                              return (String){.text = NULL, .len = -1};
-                        }
-                  } else {
+                  // TODO: WIP fix lists
+                  // int index = -1;
+                  // if (lua_isinteger(pl, -1)){
+                  //       index = lua_tointeger(pl ,-1);
+                  // }
+                  // // lua indexes start at 1
+                  // if (index > 0 && index == prev_index + 1) {
+                  //       // indexes seem to behave as if it is a list
+                  //       prev_index = index;
+                  // } else {
+                  //       // inconsistency in indexes, it cannot be a list
+                  //       index = -1;
+                  //       prev_index = -1;
+                  // }
+                  // TODO: WIP fix lists
+                  // if (index > 0){
+                  //       // list
+                  //       // TODO: WIP issue here ?
+                  //       String str_val = luaValueToString(pl, -2, depth+1, pbudget);
+                  //       if (is_null_string(str_val)){
+                  //             free_string_array(&values_as_str, pbudget);
+                  //             free_string(&total_str, pbudget);
+                  //             return (String){.text = NULL, .len = -1};
+                  //       }
+                  //       // pop value + copy of key, leaving original key
+                  //       lua_pop(pl,2);
+                  //       // stack now contains: -1 => key; -2 => table
+                  //       append_to_string_array(&values_as_str, &str_val, pbudget);
+                  //       if (values_as_str.data == NULL){
+                  //             free_string(&total_str, pbudget);
+                  //             return (String){.text = NULL, .len = -1};
+                  //       }
+                  // } else {
                         // map
                         // add what was previously supposed to be a list
                         String beginning_str = stringify_list_to_map(&values_as_str, pbudget);
@@ -218,7 +221,7 @@ String luaValueToString(lua_State* pl, int idx, int depth, size_t* pbudget) {
                               free_string_array(&values_as_str, pbudget);
                               return (String){.text = NULL, .len = -1};
                         }
-                  }
+                  // }
             }
             // stack now contains: -1 => table (when lua_next returns 0 it pops the key
             // but does not push anything.)
