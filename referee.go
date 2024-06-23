@@ -80,7 +80,7 @@ func ClaimLocation(loc Location, bot Bot, claimedMoves map[Location][]Bot, grid 
 		}
 	}
 	claimedMoves[loc] = append(otherBots, bot)
-	conflict := len(otherBots) >= 1 || (grid[loc] != NORMAL && grid[loc] != SPAWN)
+	conflict := len(otherBots) >= 1
 	if !conflict {
 		// Make sure that there aren't 2 bots swapping their places
 		// (this conflict cannot be detected in the previous check)
@@ -232,6 +232,14 @@ func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]BotState, error
 		game = append(game, currentGameState)
 
 		// Apply actions
+		for id, botState := range game[len(game)-1] {
+			nextLoc := Location{x: botState.action.x, y: botState.action.y}
+			if (botState.action.actionType == MOVE || botState.action.actionType == ATTACK) && grid[nextLoc] == OBSTACLE {
+				guardAction := Action{actionType: GUARD, x: botState.bot.x, y: botState.bot.y}
+				botState.action = guardAction
+				game[len(game)-1][id] = botState
+			}
+		}
 		claimedMoves := map[Location][]Bot{}
 		for _, botState := range game[len(game)-1] {
 			var loc Location

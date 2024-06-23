@@ -1,15 +1,12 @@
 function act(self, game)
     locs = rg.locs_around(self.location)
-
+    
     i = 1
     while locs[i] ~= nil do
         loc = locs[i]
-        robot = game[loc.x]
-        if robot ~= nil and robot[loc.y] ~= nil then
-            robot = robot[loc.y]
-            if robot.player_id ~= self.player_id then
-                return { actionType=ATTACK, x=loc.x, y=loc.y }
-            end
+        robot = game[loc.x][loc.y] 
+        if robot ~= nil and robot.player_id ~= self.player_id then
+            return { actionType=ATTACK, x=loc.x, y=loc.y }
         end
         i = i + 1
     end
