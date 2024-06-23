@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"math/rand"
 	"unsafe"
 )
@@ -122,6 +123,29 @@ func ClaimLocation(loc Location, bot Bot, claimedMoves map[Location][]Bot, grid 
 
 }
 
+func printGrid(currentGameState map[int]BotState, grid map[Location]LocationType) {
+	gameStateAsStr := ""
+	for i := 0; i < GRID_SIZE; i++ {
+		for j := 0; j < GRID_SIZE; j++ {
+			tile := " "
+			if grid[Location{x: j, y: i}] == OBSTACLE {
+				tile = "#"
+			}
+			gameStateAsStr += tile + " "
+		}
+		gameStateAsStr += "\n"
+	}
+	for _, botState := range currentGameState {
+		tile := "O"
+		if botState.bot.playerId == 1 {
+			tile = "X"
+		}
+		tileIndex := ((2*GRID_SIZE+1)*botState.bot.y + (2 * botState.bot.x))
+		gameStateAsStr = gameStateAsStr[:tileIndex] + tile + gameStateAsStr[tileIndex+1:]
+	}
+	fmt.Printf("%s\n", gameStateAsStr)
+}
+
 func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]BotState, error) {
 	game := []map[int]BotState{}
 
@@ -230,6 +254,8 @@ func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]BotState, error
 			currentGameState[bot.id] = botState
 		}
 		game = append(game, currentGameState)
+		fmt.Printf("turn %d\n", len(game))
+		printGrid(currentGameState, grid)
 
 		// Apply actions
 		for id, botState := range game[len(game)-1] {
@@ -337,5 +363,7 @@ func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]BotState, error
 		currentGameState[bot.id] = botState
 	}
 	game = append(game, currentGameState)
+	fmt.Println("RESULT")
+	printGrid(currentGameState, grid)
 	return game, nil
 }
