@@ -57,8 +57,8 @@ const (
 	SPAWN
 	OBSTACLE
 
-	GRID_SIZE    = 19
-	ARENA_RADIUS = (GRID_SIZE - 3) * 0.5
+	ARENA_RADIUS = float64(C.ARENA_RADIUS)
+	GRID_SIZE    = C.GRID_SIZE
 
 	SPAWN_DELAY       = 10
 	SPAWN_COUNT       = 5
@@ -206,37 +206,29 @@ func GetActionWithTimeout(pl unsafe.Pointer, bot Bot) (Action, error) {
 }
 
 func GetInitialisationScript() string {
-	c := fmt.Sprintf("%d", (GRID_SIZE-1)/2)
+	c := fmt.Sprintf("%d", int(ARENA_RADIUS)+1)
 	return `MOVE = ` + fmt.Sprintf("%d", MOVE) + `
 ATTACK = ` + fmt.Sprintf("%d", ATTACK) + `
 GUARD = ` + fmt.Sprintf("%d", GUARD) + `
 SUICIDE = ` + fmt.Sprintf("%d", SUICIDE) + `
-rg = {
-	CENTER_POINT = { x=` + c + `, y=` + c + `},
-	GRID_SIZE = ` + fmt.Sprintf("%d", GRID_SIZE) + `,
-	ARENA_RADIUS = ` + fmt.Sprintf("%f", ARENA_RADIUS) + `,
-	SETTINGS = {
-		spawn_delay = ` + fmt.Sprintf("%d", SPAWN_DELAY) + `,
-		spawn_count = ` + fmt.Sprintf("%d", SPAWN_COUNT) + `,
-		robot_hp = ` + fmt.Sprintf("%d", MAX_HP) + `,
-		attack_range = ` + fmt.Sprintf("%d", ATTACK_RANGE) + `,
-		attack_damage = { ` +
+rg.CENTER_POINT = { x=` + c + `, y=` + c + `}
+rg.GRID_SIZE = ` + fmt.Sprintf("%d", GRID_SIZE) + `
+rg.ARENA_RADIUS = ` + fmt.Sprintf("%d", int(ARENA_RADIUS)) + `
+rg.SETTINGS = {
+	spawn_delay = ` + fmt.Sprintf("%d", SPAWN_DELAY) + `,
+	spawn_count = ` + fmt.Sprintf("%d", SPAWN_COUNT) + `,
+	robot_hp = ` + fmt.Sprintf("%d", MAX_HP) + `,
+	attack_range = ` + fmt.Sprintf("%d", ATTACK_RANGE) + `,
+	attack_damage = { ` +
 		`min=` + fmt.Sprintf("%d", ATTACK_DAMAGE_MIN) + `, ` +
 		`max=` + fmt.Sprintf("%d", ATTACK_DAMAGE_MAX) +
 		` },
-		suicide_damage = ` + fmt.Sprintf("%d", SUICIDE_DAMAGE) + `,
-		collision_damage = ` + fmt.Sprintf("%d", COLLISION_DAMAGE) + `,
-		max_turn = ` + fmt.Sprintf("%d", MAX_TURN) + `
-	},
+	suicide_damage = ` + fmt.Sprintf("%d", SUICIDE_DAMAGE) + `,
+	collision_damage = ` + fmt.Sprintf("%d", COLLISION_DAMAGE) + `,
+	max_turn = ` + fmt.Sprintf("%d", MAX_TURN) + `,
 }
-
-rg.wdist = _rg_walk_dist
-_rg_walk_dist = nil
-
-rg.locs_around = _rg_locs_around
-_rg_locs_around = nil
-
 __RG_CORE_SYSTEM = { 
+	GRID_SIZE = rg.GRID_SIZE,
 	self = {}
 }
 `
@@ -248,8 +240,7 @@ func GetLoadActScript() string {
 
 func InitRG(pl unsafe.Pointer, script string, fileName string) error {
 	var err error
-	PushFunction(pl, unsafe.Pointer(C.rgLocsAroundInLua), "_rg_locs_around")
-	PushFunction(pl, unsafe.Pointer(C.rgWalkDistInLua), "_rg_walk_dist")
+	C.loadRg(pl)
 	err = RunScript(pl, GetInitialisationScript(), "[Initialisation Script]")
 	if err != nil {
 		fmt.Printf("%v\n", err)

@@ -3,6 +3,9 @@
 #include "debug.h"
 #include "rg.h"
 
+#define ARENA_RADIUS 8
+#define GRID_SIZE 2*ARENA_RADIUS + 3
+
 int get_action(void* pl, void* paction, int bot_id) {
     int clean_stack_size = lua_gettop(pl);
     int err = 0;
@@ -195,4 +198,20 @@ int rgLocsAroundInLua(lua_State* pl) {
         lua_seti(pl, -2, i + 1);
     }
     return 1;
+}
+
+int luaopen_librobotgame(lua_State* L)
+{
+    static const struct luaL_Reg robotGameLib [] = {
+        {"wdist", rgWalkDistInLua},
+        {"locs_around", rgLocsAroundInLua},
+        {NULL, NULL}
+    };
+    luaL_newlib(L, robotGameLib);
+    return 1;
+}
+
+void loadRg(void* pl) {
+	luaL_requiref((lua_State*)pl, "rg", luaopen_librobotgame, 1);
+	lua_pop((lua_State*)pl, 1);
 }
