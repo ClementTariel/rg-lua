@@ -190,7 +190,7 @@ int rgLocsAroundInLua(lua_State* pl) {
     int y = lua_tointeger(pl, -1);
     lua_createtable(pl, 4, 0);
     for (int i=0; i<4; i++){
-        lua_createtable(pl, 2, 0);
+        lua_createtable(pl, 0, 2);
         lua_pushinteger(pl, x + (i%2) * ((i-2)%4));
         lua_setfield(pl, -2, "x");
         lua_pushinteger(pl, y + ((i+1)%2) * ((i-1)%4));
@@ -200,14 +200,24 @@ int rgLocsAroundInLua(lua_State* pl) {
     return 1;
 }
 
-int luaopen_librobotgame(lua_State* L)
+int luaopen_librobotgame(lua_State* pl)
 {
     static const struct luaL_Reg robotGameLib [] = {
         {"wdist", rgWalkDistInLua},
         {"locs_around", rgLocsAroundInLua},
         {NULL, NULL}
     };
-    luaL_newlib(L, robotGameLib);
+    luaL_newlib(pl, robotGameLib);
+    lua_pushinteger(pl, GRID_SIZE);
+    lua_setfield(pl, -2, "GRID_SIZE");
+    lua_pushinteger(pl, ARENA_RADIUS);
+    lua_setfield(pl, -2, "ARENA_RADIUS");
+    lua_createtable(pl, 0, 2);
+    lua_pushinteger(pl, ARENA_RADIUS + 1);
+    lua_setfield(pl, -2, "x");
+    lua_pushinteger(pl, ARENA_RADIUS + 1);
+    lua_setfield(pl, -2, "y");
+    lua_setfield(pl, -2, "CENTER_POINT");
     return 1;
 }
 

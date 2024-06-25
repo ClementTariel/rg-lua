@@ -61,20 +61,20 @@ The `game` argument let you access robots information by coordinate : `game[x][y
 ### Available interfaces
 
 an object `rg` is accessible by all robots, with the following properties :
-- `CENTER_POINT` : The location of the center of the arena.
-- `GRID_SIZE` : The size of the grid.
-- `ARENA_RADIUS` : The radius of the area.
+- `CENTER_POINT = { x=9, y=9 }` : The location of the center of the arena.
+- `GRID_SIZE = 19` : The size of the grid.
+- `ARENA_RADIUS = 8` : The radius of the area (The spawn tiles at the border of the arena have a distance to the center between `ARENA_RADIUS - 0.5` and `ARENA_RADIUS + 0.5` tiles).
 - `SETTINGS` : an object exposing the main constants of the game :
-    - `spawn_delay` : The delay between 2 waves of spawns.
-    - `spawn_count` : The number of robots spawned for each team for each wave of spawns.
-	- `robot_hp` : The maximum number of Health Points of a robot.
-	- `attack_range` : The maximum distance to another bot for an attack to be valid.
+    - `spawn_delay = 10` : The delay between 2 waves of spawns.
+    - `spawn_count = 5` : The number of robots spawned for each team for each wave of spawns.
+	- `robot_hp = 50` : The maximum number of Health Points of a robot.
+	- `attack_range = 1` : The maximum distance to another bot for an attack to be valid.
 	- `attack_damage` : The min and max damages dealt by an attack :
-        - `min` : the minimum
-        - `max` : the maximum
-	- `suicide_damage` : The damages dealt by a suicide.
-	- `collision_damage` : The damages dealt by a collision.
-    - `max_turn` : The number of turns in a game.
+        - `min = 8` : the minimum
+        - `max = 10` : the maximum
+	- `suicide_damage = 15` : The damages dealt by a suicide.
+	- `collision_damage = 5` : The damages dealt by a collision.
+    - `max_turn = 100` : The number of turns in a game.
 - `wdist(location1, location2)` : A function that returns the walking distance between location1  and location2.
 - `locs_around(location)` : A function that returns the list of locations around location.
 

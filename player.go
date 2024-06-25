@@ -8,12 +8,12 @@ import (
 
 func ResetGame(pl unsafe.Pointer, turn int) error {
 	const resetScript = `__RG_CORE_SYSTEM.game = {}
-for i = 0,__RG_CORE_SYSTEM.GRID_SIZE,1 do
+for i = 0,%[1]d-1,1 do
 	__RG_CORE_SYSTEM.game[i] = {}
 end
-__RG_CORE_SYSTEM.game.turn = %d
+__RG_CORE_SYSTEM.game.turn = %[2]d
 `
-	return RunScript(pl, fmt.Sprintf(resetScript, turn), "[reset game data]")
+	return RunScript(pl, fmt.Sprintf(resetScript, GRID_SIZE, turn), "[reset game data]")
 }
 
 func LoadGameBot(pl unsafe.Pointer, bot Bot) error {

@@ -206,14 +206,10 @@ func GetActionWithTimeout(pl unsafe.Pointer, bot Bot) (Action, error) {
 }
 
 func GetInitialisationScript() string {
-	c := fmt.Sprintf("%d", int(ARENA_RADIUS)+1)
 	return `MOVE = ` + fmt.Sprintf("%d", MOVE) + `
 ATTACK = ` + fmt.Sprintf("%d", ATTACK) + `
 GUARD = ` + fmt.Sprintf("%d", GUARD) + `
 SUICIDE = ` + fmt.Sprintf("%d", SUICIDE) + `
-rg.CENTER_POINT = { x=` + c + `, y=` + c + `}
-rg.GRID_SIZE = ` + fmt.Sprintf("%d", GRID_SIZE) + `
-rg.ARENA_RADIUS = ` + fmt.Sprintf("%d", int(ARENA_RADIUS)) + `
 rg.SETTINGS = {
 	spawn_delay = ` + fmt.Sprintf("%d", SPAWN_DELAY) + `,
 	spawn_count = ` + fmt.Sprintf("%d", SPAWN_COUNT) + `,
@@ -235,7 +231,7 @@ __RG_CORE_SYSTEM = {
 }
 
 func GetLoadActScript() string {
-	return `__RG_CORE_SYSTEM["act"] = act`
+	return `__RG_CORE_SYSTEM.act = act`
 }
 
 func InitRG(pl unsafe.Pointer, script string, fileName string) error {
