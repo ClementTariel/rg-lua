@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 	"unsafe"
 )
 
@@ -143,7 +144,11 @@ func printGrid(currentGameState map[int]BotState, grid map[Location]LocationType
 		tileIndex := ((2*GRID_SIZE+1)*botState.bot.y + (2 * botState.bot.x))
 		gameStateAsStr = gameStateAsStr[:tileIndex] + tile + gameStateAsStr[tileIndex+1:]
 	}
-	fmt.Printf("%s\n", gameStateAsStr)
+	gameStateAsStr = strings.ReplaceAll(gameStateAsStr, "# ", "\033[40m  \033[47m")
+	gameStateAsStr = strings.ReplaceAll(gameStateAsStr, "X ", "\033[41m  \033[47m")
+	gameStateAsStr = strings.ReplaceAll(gameStateAsStr, "O ", "\033[46m  \033[47m")
+	gameStateAsStr = strings.ReplaceAll(gameStateAsStr, "\n", "\033[0m\n\033[47m")
+	fmt.Printf("\033[47m%s\033[0m\n", gameStateAsStr)
 }
 
 func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]BotState, error) {
