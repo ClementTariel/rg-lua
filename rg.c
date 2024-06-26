@@ -134,7 +134,7 @@ int getActionWithTimeoutBridge(void* pl, void* paction, int bot_id, int timeout)
     return err;
 }
 
-int rgWalkDistInLua(lua_State* pl) {
+int rg_walk_dist_in_lua(lua_State* pl) {
     int argc = lua_gettop(pl);
     if (argc != 2){
         return 0;
@@ -142,27 +142,23 @@ int rgWalkDistInLua(lua_State* pl) {
     if (!(lua_istable(pl, 1) && lua_istable(pl, 2)) ) {
         return 0;
     }
-    lua_getfield(pl, 1, "x");
+    lua_getfield(pl, -2, "x");
     if (!lua_isnumber(pl, -1)){
-        lua_pop(pl, lua_gettop(pl) - argc);
         return 0;
     }
     int x1 = lua_tointeger(pl, -1);
-    lua_getfield(pl, 1, "y");
+    lua_getfield(pl, -3, "y");
     if (!lua_isnumber(pl, -1)){
-        lua_pop(pl, lua_gettop(pl) - argc);
         return 0;
     }
     int y1 = lua_tointeger(pl, -1);
-    lua_getfield(pl, 2, "x");
+    lua_getfield(pl, -3, "x");
     if (!lua_isnumber(pl, -1)){
-        lua_pop(pl, lua_gettop(pl) - argc);
         return 0;
     }
     int x2 = lua_tointeger(pl, -1);
-    lua_getfield(pl, 2, "y");
+    lua_getfield(pl, 4, "y");
     if (!lua_isnumber(pl, -1)){
-        lua_pop(pl, lua_gettop(pl) - argc);
         return 0;
     }
     int y2 = lua_tointeger(pl, -1);
@@ -171,40 +167,130 @@ int rgWalkDistInLua(lua_State* pl) {
     return 1;
 }
 
-int rgLocsAroundInLua(lua_State* pl) {
+int locs_equal_in_lua(lua_State* pl) {
+    int argc = lua_gettop(pl);
+    if (argc != 2){
+        return 0;
+    }
+    lua_pushcfunction(pl, rg_walk_dist_in_lua);
+    lua_pushvalue(pl, -3);
+    lua_pushvalue(pl, -3);
+    // call with 2 arguments, one result
+    if (lua_pcall(pl, 2, 1, 0) != 0 || !lua_isnumber(pl, -1)){
+        return 0;
+    }
+    int dist = lua_tointeger(pl, -1);
+    lua_pushboolean(pl, dist == 0);
+    return 1;
+}
+
+
+int create_loc_in_lua(lua_State* pl) {
+    int argc = lua_gettop(pl);
+    if (argc != 2){
+        return 0;
+    }
+    if (!lua_isnumber(pl, -1) || !lua_isnumber(pl, -2) ){
+        return 0;
+    }
+    int x = lua_tointeger(pl, -2);
+    int y = lua_tointeger(pl, -1);
+    lua_createtable(pl, 0, 2);
+    lua_pushinteger(pl, x);
+    lua_setfield(pl, -2, "x");
+    lua_pushinteger(pl, y);
+    lua_setfield(pl, -2, "y");
+    lua_createtable(pl, 0, 1);
+    lua_pushcfunction(pl, locs_equal_in_lua);
+    lua_setfield(pl, -2, "__eq");
+    lua_setmetatable(pl, -2);
+    return 1;
+}
+
+int loc_map_index_in_lua(lua_State* pl) {
+    int argc = lua_gettop(pl);
+    if (argc != 2 || !lua_istable(pl, -2)){
+        return 0;
+    }
+    if (!lua_istable(pl, -1)){
+        lua_pushnil(pl);
+        return 1;
+    }
+    lua_getfield(pl, -1, "x");
+    if (!lua_isnumber(pl, -1)){
+        lua_pushnil(pl);
+        return 1;
+    }
+    int x = lua_tointeger(pl, -1);
+    lua_getfield(pl, -2, "y");
+    if (!lua_isnumber(pl, -1)){
+        lua_pushnil(pl);
+        return 1;
+    }
+    int y = lua_tointeger(pl, -1);
+    if (x < 0 || x > GRID_SIZE || y < 0 || y > GRID_SIZE){
+        lua_pushnil(pl);
+        return 1;
+    }
+    lua_geti(pl, -4, x);
+    if (!lua_istable(pl, -1)){
+        lua_pushnil(pl);
+        return 1;
+    }
+    lua_geti(pl, -1, y);
+    return 1;
+}
+
+int create_loc_table_in_lua(lua_State* pl) {
+    int argc = lua_gettop(pl);
+    if (argc != 0){
+        return 0;
+    }
+    lua_createtable(pl, 0, 0);
+    lua_createtable(pl, 0, 1);
+    lua_pushcfunction(pl, loc_map_index_in_lua);
+    lua_setfield(pl, -2, "__index");
+    lua_setmetatable(pl, -2);
+    return 1;
+}
+
+int rg_locs_around_in_lua(lua_State* pl) {
     int argc = lua_gettop(pl);
     if (argc != 1){
         return 0;
     }
-    lua_getfield(pl, 1, "x");
+    lua_getfield(pl, -1, "x");
     if (!lua_isnumber(pl, -1)){
-        lua_pop(pl, lua_gettop(pl) - argc);
         return 0;
     }
     int x = lua_tointeger(pl, -1);
-    lua_getfield(pl, 1, "y");
+    lua_getfield(pl, -2, "y");
     if (!lua_isnumber(pl, -1)){
-        lua_pop(pl, lua_gettop(pl) - argc);
         return 0;
     }
     int y = lua_tointeger(pl, -1);
     lua_createtable(pl, 4, 0);
     for (int i=0; i<4; i++){
-        lua_createtable(pl, 0, 2);
+        lua_pushcfunction(pl, create_loc_in_lua);
         lua_pushinteger(pl, x + (i%2) * ((i-2)%4));
-        lua_setfield(pl, -2, "x");
         lua_pushinteger(pl, y + ((i+1)%2) * ((i-1)%4));
-        lua_setfield(pl, -2, "y");
+        if (lua_pcall(pl, 2, 1, 0) != 0){
+            return 0;
+        }
         lua_seti(pl, -2, i + 1);
     }
     return 1;
 }
 
+
+
 int luaopen_librobotgame(lua_State* pl)
 {
     static const struct luaL_Reg robotGameLib [] = {
-        {"wdist", rgWalkDistInLua},
-        {"locs_around", rgLocsAroundInLua},
+        {"wdist", rg_walk_dist_in_lua},
+        {"locs_around", rg_locs_around_in_lua},
+        {"Loc", create_loc_in_lua},
+        {"Game", create_loc_table_in_lua},
         {NULL, NULL}
     };
     luaL_newlib(pl, robotGameLib);
@@ -212,11 +298,12 @@ int luaopen_librobotgame(lua_State* pl)
     lua_setfield(pl, -2, "GRID_SIZE");
     lua_pushinteger(pl, ARENA_RADIUS);
     lua_setfield(pl, -2, "ARENA_RADIUS");
-    lua_createtable(pl, 0, 2);
+    lua_pushcfunction(pl, create_loc_in_lua);
     lua_pushinteger(pl, ARENA_RADIUS + 1);
-    lua_setfield(pl, -2, "x");
     lua_pushinteger(pl, ARENA_RADIUS + 1);
-    lua_setfield(pl, -2, "y");
+    if (lua_pcall(pl, 2, 1, 0) != 0){
+        return 0;
+    }
     lua_setfield(pl, -2, "CENTER_POINT");
     return 1;
 }

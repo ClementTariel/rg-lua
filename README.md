@@ -48,20 +48,21 @@ A robot's own info is accessible through the `self` argument. The default proper
 - `robot_id` : The unique id of the robot.
 - `player_id` : An id shared by all the robots of a team.
 - `hp` : The number of Health Points of the robot.
-- `location` : The location of the robot as an object with the properties `x` and `y`correspondng to its x and y coordinates.
+- `location` : The location of the robot as a Location with the properties `x` and `y`corresponding to its x and y coordinates. *Note: a Location can be directly compared to another Location, for example `self.location == rg.CENTER_POINT` will return `true` if the bot is at the center of the arena.*
 
 ### Accessing any robot's info
 
-**Note: The structure of `game` may change soon**
-
-The `game` argument let you access robots information by coordinate : `game[x][y]` returns the info of the robot placed at `{ x=x, y=y }`. If the tile at `x`, `y` is empty, `nil` is returned. Each robot shares the same info as `self` except that `robot_id` is not accessible for enemy robots.
+The `game` argument let you access robots information by Location : `game[location]` returns the info of the robot placed at `location`. If the tile at `location.x`, `location.y` is empty, `nil` is returned. Each robot shares the same info as `self` except that `robot_id` is not accessible for enemy robots.
 
 `game` also lets you access the current turn count with the property `turn`.
 
 ### Available interfaces
 
-an object `rg` is accessible by all robots, with the following properties :
-- `CENTER_POINT = { x=9, y=9 }` : The location of the center of the arena.
+an object `rg` is accessible by all robots, with the following functions and properties :
+- `Loc(x, y)` : A function that returns a Location `{ x=x, y=y }` that can be directly compared to another Location. For example `rg.Loc(9, 9) == rg.Loc(9, 9)` and `rg.Loc(9, 9) == { x=9, y=9 }` will both return `true` when `{ x=9, y=9 } == { x=9, y=9 }` will return `false`.
+- `wdist(loc1, loc2)` : A function that returns the walking distance between Locations `loc1`  and `loc2`.
+- `locs_around(loc)` : A function that returns the list of Locations around the Location `loc`.
+- `CENTER_POINT = rg.Loc(9, 9)` : A Location corresponding to the center of the arena.
 - `GRID_SIZE = 19` : The size of the grid.
 - `ARENA_RADIUS = 8` : The radius of the area (The spawn tiles at the border of the arena have a distance to the center between `ARENA_RADIUS - 0.5` and `ARENA_RADIUS + 0.5` tiles).
 - `SETTINGS` : an object exposing the main constants of the game :
@@ -75,8 +76,6 @@ an object `rg` is accessible by all robots, with the following properties :
 	- `suicide_damage = 15` : The damages dealt by a suicide.
 	- `collision_damage = 5` : The damages dealt by a collision.
     - `max_turn = 100` : The number of turns in a game.
-- `wdist(location1, location2)` : A function that returns the walking distance between location1  and location2.
-- `locs_around(location)` : A function that returns the list of locations around location.
 
 ### Rules
 

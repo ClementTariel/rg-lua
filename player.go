@@ -7,7 +7,7 @@ import (
 )
 
 func ResetGame(pl unsafe.Pointer, turn int) error {
-	const resetScript = `__RG_CORE_SYSTEM.game = {}
+	const resetScript = `__RG_CORE_SYSTEM.game = rg.Game()
 for i = 0,%[1]d-1,1 do
 	__RG_CORE_SYSTEM.game[i] = {}
 end
@@ -22,7 +22,7 @@ func LoadGameBot(pl unsafe.Pointer, bot Bot) error {
 		botId = fmt.Sprintf("%d", bot.id)
 	}
 	const loadScript = `__RG_CORE_SYSTEM.game[%[1]d][%[2]d] = {
-	location = { x=%[1]d, y=%[2]d },
+	location = rg.Loc(%[1]d, %[2]d),
 	hp = %[3]d,
 	player_id = %[4]d,
 	id = %[5]s,
@@ -42,7 +42,7 @@ func LoadSelf(pl unsafe.Pointer, bot Bot) error {
 	__RG_CORE_SYSTEM.self[%[5]d] = {}
 end
 __RG_CORE_SYSTEM.self[%[5]d].id = %[5]d
-__RG_CORE_SYSTEM.self[%[5]d].location = { x=%[1]d, y = %[2]d }
+__RG_CORE_SYSTEM.self[%[5]d].location = rg.Loc(%[1]d, %[2]d)
 __RG_CORE_SYSTEM.self[%[5]d].hp = %[3]d
 __RG_CORE_SYSTEM.self[%[5]d].player_id = %[4]d
 __RG_CORE_SYSTEM.self[%[5]d].id = %[5]d
