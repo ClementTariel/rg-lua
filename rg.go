@@ -225,7 +225,8 @@ rg.SETTINGS = {
 }
 __RG_CORE_SYSTEM = { 
 	GRID_SIZE = rg.GRID_SIZE,
-	self = {}
+	self = {},
+	game = {},
 }
 `
 }

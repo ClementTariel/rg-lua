@@ -4,7 +4,7 @@ function act(self, game)
     i = 1
     while locs[i] ~= nil do
         loc = locs[i]
-        robot = game[loc.x][loc.y] 
+        robot = game.robots[loc.x][loc.y] 
         if robot ~= nil and robot.player_id ~= self.player_id then
             return { actionType=ATTACK, x=loc.x, y=loc.y }
         end

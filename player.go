@@ -7,9 +7,9 @@ import (
 )
 
 func ResetGame(pl unsafe.Pointer, turn int) error {
-	const resetScript = `__RG_CORE_SYSTEM.game = rg.Game()
+	const resetScript = `__RG_CORE_SYSTEM.game.robots = rg.Robots()
 for i = 0,%[1]d-1,1 do
-	__RG_CORE_SYSTEM.game[i] = {}
+	__RG_CORE_SYSTEM.game.robots[i] = {}
 end
 __RG_CORE_SYSTEM.game.turn = %[2]d
 `
@@ -21,7 +21,7 @@ func LoadGameBot(pl unsafe.Pointer, bot Bot) error {
 	if (bot.id) > 0 {
 		botId = fmt.Sprintf("%d", bot.id)
 	}
-	const loadScript = `__RG_CORE_SYSTEM.game[%[1]d][%[2]d] = {
+	const loadScript = `__RG_CORE_SYSTEM.game.robots[%[1]d][%[2]d] = {
 	location = rg.Loc(%[1]d, %[2]d),
 	hp = %[3]d,
 	player_id = %[4]d,

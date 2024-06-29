@@ -16,9 +16,9 @@ You need [golang](https://go.dev/) 1.21.4 and [lua 5.3](https://www.lua.org/vers
 
 ## Getting started
 
-To run locally a match between PATH/TO/LUA/BOT1 and PATH/TO/LUA/BOT2 use the following command : `go run debug.go lua.go rg.go player.go referee.go main.go PATH/TO/LUA/BOT1 PATH/TO/LUA/BOT2`
+To run locally a match between PATH/TO/LUA/BOT1 and PATH/TO/LUA/BOT2 use the following command: `go run debug.go lua.go rg.go player.go referee.go main.go PATH/TO/LUA/BOT1 PATH/TO/LUA/BOT2`
 
-*Note: The first time you run it after an update, run go with the `-a` flag to make sure C files are recompiled : `go run -a debug.go lua.go rg.go player.go referee.go main.go PATH/TO/LUA/BOT1 PATH/TO/LUA/BOT2`*
+*Note: The first time you run it after an update, run go with the `-a` flag to make sure C files are recompiled: `go run -a debug.go lua.go rg.go player.go referee.go main.go PATH/TO/LUA/BOT1 PATH/TO/LUA/BOT2`*
 
 Checkout the [Documentation](#documentation) section to learn how to create your own robot.
 
@@ -52,7 +52,14 @@ A robot's own info is accessible through the `self` argument. The default proper
 
 ### Accessing any robot's info
 
-The `game` argument let you access robots information by Location : `game[location]` returns the info of the robot placed at `location`. If the tile at `location.x`, `location.y` is empty, `nil` is returned. Each robot shares the same info as `self` except that `robot_id` is not accessible for enemy robots.
+The `game` argument let you access robots information by Location  with its property `robots`: `game.robots[location]` returns the info of the robot placed at `location`. If the tile at `location.x`, `location.y` is empty, `nil` is returned. Each robot shares the same info as `self` except that `robot_id` is not accessible for enemy robots. You can loop over `game.robots` with `pairs`:
+```lua
+for loc, bot in pairs(game.robots) do
+    -- Do something with loc and/or bot.
+    -- Note that you do not need loc,
+    -- because loc == bot.location is true
+end
+```
 
 `game` also lets you access the current turn count with the property `turn`.
 
@@ -79,7 +86,7 @@ an object `rg` is accessible by all robots, with the following functions and pro
 
 ### Rules
 
-Robots have 10ms to act, they have one action per turn : 
+Robots have 10ms to act, they have one action per turn: 
 - `MOVE` : moves the robot to an adjacent tile.
 - `ATTACK` : attack a tile at range.
 - `GUARD` : stay in place, protect against collision damages and take half damage from attacks and suicides.

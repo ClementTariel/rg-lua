@@ -25,18 +25,23 @@ int get_action(void* pl, void* paction, int bot_id) {
         lua_pop(pl, lua_gettop(pl) - clean_stack_size);
         return 101;
     }
-    lua_getfield(pl, -3, "act");
-    if (!lua_isfunction(pl, -1)){
-        lua_pop(pl, lua_gettop(pl) - clean_stack_size);
-        return 102;
-    }
-    lua_pushvalue(pl, -2);
-    lua_getfield(pl, -5, "game");
+    lua_getfield(pl, -3, "game");
     if (!lua_istable(pl, -1)){
         lua_pop(pl, lua_gettop(pl) - clean_stack_size);
         return 101;
     }
-
+    lua_getfield(pl, -1, "robots");
+    if (!lua_istable(pl, -1)){
+        lua_pop(pl, lua_gettop(pl) - clean_stack_size);
+        return 101;
+    }
+    lua_getfield(pl, -5, "act");
+    if (!lua_isfunction(pl, -1)){
+        lua_pop(pl, lua_gettop(pl) - clean_stack_size);
+        return 102;
+    }
+    lua_pushvalue(pl, -4);
+    lua_pushvalue(pl, -4);
     err = lua_pcall(pl, 2, 1, 0); // 2 arguments, one result
     if (err != 0){
         lua_pop(pl, lua_gettop(pl) - clean_stack_size);
@@ -184,7 +189,6 @@ int locs_equal_in_lua(lua_State* pl) {
     return 1;
 }
 
-
 int create_loc_in_lua(lua_State* pl) {
     int argc = lua_gettop(pl);
     if (argc != 2){
@@ -205,6 +209,87 @@ int create_loc_in_lua(lua_State* pl) {
     lua_setfield(pl, -2, "__eq");
     lua_setmetatable(pl, -2);
     return 1;
+}
+
+int custom_next (lua_State *pl) {
+    int argc = lua_gettop(pl);
+    if (argc != 2 || !lua_istable(pl, 1) || (!lua_istable(pl, 2) && !lua_isnil(pl, 2)))   {
+        return 0;
+    }
+    lua_pushvalue(pl, 1);
+    if (lua_istable(pl, 2)) {
+        lua_getfield(pl, 2, "x");
+    } else {
+        lua_pushnil(pl);
+    }
+    if (!lua_isinteger(pl, -1)){
+        // stack : -1 => nil; -2 => game
+        if (lua_next(pl, -2) == 0) {
+            lua_pushnil(pl);
+            return 1;
+        }
+        // stack : -1 => game[x]; -2 => x; -3 => game
+    } else {
+        int x = lua_tointeger(pl, -1);
+        lua_geti(pl, 1, x);
+        // stack : -1 => game[x]; -2 => x; -3 => game
+    }
+    if (lua_istable(pl, 2)) {
+        lua_getfield(pl, 2, "y");
+    } else {
+        lua_pushnil(pl);
+    }
+    // stack : -1 => y; -2 => game[x]; -3 => x; -4 => game
+    int end = false;
+    int next_game_x = lua_next(pl, -2);
+    while (next_game_x == 0 && !end){
+        // stack : -1 => game[x]; -2 => x; -3 => game
+        lua_pop(pl, 1);
+        // stack : -1 => x; -2 => game
+        if (lua_next(pl, -2) != 0){
+            // stack : -1 => game[x+1]; -2 => x+1; -3 => game
+            lua_pushnil(pl);
+            // stack : -1 => nil; -2 => game[x+1]; -3 => x+1; -4 => game
+            next_game_x = lua_next(pl, -2);
+        } else {
+            end = true;
+        }
+    }
+    if (end){
+        lua_pushnil(pl);
+        return 1;
+    }
+    // stack : -1 => game[x][y]; -2 => y; -3 => game[x]; -4 => x; -5 => game
+    if (!lua_isinteger(pl, -4) || !lua_isinteger(pl, -2)){
+        return 0;
+    }
+    int x = lua_tointeger(pl, -4);
+    int y = lua_tointeger(pl, -2);
+    lua_pushcfunction(pl, create_loc_in_lua);
+    lua_pushinteger(pl, x);
+    lua_pushinteger(pl, y);
+    if (lua_pcall(pl, 2, 1, 0) != 0){
+        return 0;
+    }
+    // stack : -1 => rg.Loc(x, y); -2 => game[x][y]; ...
+    lua_pushvalue(pl, -2);
+    // stack : -1 => game[x][y]; -2 => rg.Loc(x, y); -3 => game[x][y]; ...
+    return 2;
+
+}
+
+int robots_pairs_in_lua(lua_State *pl) {
+    int argc = lua_gettop(pl);
+    if (argc != 1){
+        return 0;
+    }
+    if (!lua_istable(pl, -1)){
+        return 0;
+    }
+    lua_pushcfunction(pl, custom_next); // iterator
+    lua_pushvalue(pl, 1); // robots
+    lua_pushnil(pl);
+    return 3;
 }
 
 int loc_map_index_in_lua(lua_State* pl) {
@@ -250,6 +335,8 @@ int create_loc_table_in_lua(lua_State* pl) {
     lua_createtable(pl, 0, 1);
     lua_pushcfunction(pl, loc_map_index_in_lua);
     lua_setfield(pl, -2, "__index");
+    lua_pushcfunction(pl, robots_pairs_in_lua);
+    lua_setfield(pl, -2, "__pairs");
     lua_setmetatable(pl, -2);
     return 1;
 }
@@ -288,7 +375,7 @@ int luaopen_librobotgame(lua_State* pl)
         {"wdist", rg_walk_dist_in_lua},
         {"locs_around", rg_locs_around_in_lua},
         {"Loc", create_loc_in_lua},
-        {"Game", create_loc_table_in_lua},
+        {"Robots", create_loc_table_in_lua},
         {NULL, NULL}
     };
     luaL_newlib(pl, robotGameLib);
@@ -306,7 +393,39 @@ int luaopen_librobotgame(lua_State* pl)
     return 1;
 }
 
+// copy-paste from source code because it did not work otherwise
+static int pairsmeta (lua_State *L, const char *method, int iszero,
+                      lua_CFunction iter) {
+  if (!luaL_getmetafield(L, 1, method)) {  /* no metamethod? */
+    luaL_checktype(L, 1, LUA_TTABLE);  /* argument must be a table */
+    lua_pushcfunction(L, iter);  /* will return generator, */
+    lua_pushvalue(L, 1);  /* state, */
+    if (iszero) lua_pushinteger(L, 0);  /* and initial value */
+    else lua_pushnil(L);
+  }
+  else {
+    lua_pushvalue(L, 1);  /* argument 'self' to metamethod */
+    lua_call(L, 1, 3);  /* get 3 values from metamethod */
+  }
+  return 3;
+}
+static int luaB_next (lua_State *L) {
+  luaL_checktype(L, 1, LUA_TTABLE);
+  lua_settop(L, 2);  /* create a 2nd argument if there isn't one */
+  if (lua_next(L, 1))
+    return 2;
+  else {
+    lua_pushnil(L);
+    return 1;
+  }
+}
+static int luaB_pairs (lua_State *L) {
+  return pairsmeta(L, "__pairs", 0, luaB_next);
+}
+
 void loadRg(void* pl) {
+    lua_pushcfunction(pl, luaB_pairs);
+    lua_setglobal((lua_State*)pl, "pairs");
 	luaL_requiref((lua_State*)pl, "rg", luaopen_librobotgame, 1);
 	lua_pop((lua_State*)pl, 1);
 }
