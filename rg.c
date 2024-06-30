@@ -393,39 +393,7 @@ int luaopen_librobotgame(lua_State* pl)
     return 1;
 }
 
-// copy-paste from source code because it did not work otherwise
-static int pairsmeta (lua_State *L, const char *method, int iszero,
-                      lua_CFunction iter) {
-  if (!luaL_getmetafield(L, 1, method)) {  /* no metamethod? */
-    luaL_checktype(L, 1, LUA_TTABLE);  /* argument must be a table */
-    lua_pushcfunction(L, iter);  /* will return generator, */
-    lua_pushvalue(L, 1);  /* state, */
-    if (iszero) lua_pushinteger(L, 0);  /* and initial value */
-    else lua_pushnil(L);
-  }
-  else {
-    lua_pushvalue(L, 1);  /* argument 'self' to metamethod */
-    lua_call(L, 1, 3);  /* get 3 values from metamethod */
-  }
-  return 3;
-}
-static int luaB_next (lua_State *L) {
-  luaL_checktype(L, 1, LUA_TTABLE);
-  lua_settop(L, 2);  /* create a 2nd argument if there isn't one */
-  if (lua_next(L, 1))
-    return 2;
-  else {
-    lua_pushnil(L);
-    return 1;
-  }
-}
-static int luaB_pairs (lua_State *L) {
-  return pairsmeta(L, "__pairs", 0, luaB_next);
-}
-
 void loadRg(void* pl) {
-    lua_pushcfunction(pl, luaB_pairs);
-    lua_setglobal((lua_State*)pl, "pairs");
 	luaL_requiref((lua_State*)pl, "rg", luaopen_librobotgame, 1);
 	lua_pop((lua_State*)pl, 1);
 }
