@@ -47,18 +47,18 @@ type (
 )
 
 const (
-	MOVE ActionType = iota
-	ATTACK
-	GUARD
-	SUICIDE
+	MOVE    = ActionType(C.MOVE)
+	ATTACK  = ActionType(C.ATTACK)
+	GUARD   = ActionType(C.GUARD)
+	SUICIDE = ActionType(C.SUICIDE)
 
-	INVALID LocationType = iota
-	NORMAL
-	SPAWN
-	OBSTACLE
+	NORMAL    = LocationType(C.NORMAL)
+	SPAWN     = LocationType(C.SPAWN)
+	OBSTACLE  = LocationType(C.OBSTACLE)
+	SPAWN_LEN = int(C.SPAWN_LEN)
 
 	ARENA_RADIUS = float64(C.ARENA_RADIUS)
-	GRID_SIZE    = C.GRID_SIZE
+	GRID_SIZE    = int(C.GRID_SIZE)
 
 	SPAWN_DELAY       = 10
 	SPAWN_COUNT       = 5
@@ -82,6 +82,9 @@ const (
 )
 
 var (
+	GRID            = C.GRID
+	SPAWN_LOCATIONS = C.SPAWN_LOCATIONS
+
 	RG_CORE_SYSTEM_CORRUPTED_ERROR = NewRGError(101)
 	UNDEFINED_ACT_FUNCTION_ERROR   = NewRGError(102)
 	INVALID_ACTION_FORMAT_ERROR    = NewRGError(103)

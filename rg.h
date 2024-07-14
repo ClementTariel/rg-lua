@@ -1,17 +1,25 @@
 #ifndef RG_H
 #define RG_H
 
+#include <stdbool.h>
+#include <pthread.h>
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
 
 enum ActionType { MOVE = 0, ATTACK= 1, GUARD = 2, SUICIDE = 3};
+enum LocType { NORMAL = 4, SPAWN = 5, OBSTACLE = 6};
 
-struct Action {
+typedef struct Location {
+	int x;
+	int y;
+} Location;
+
+typedef struct Action {
 	int actionType;
 	int x;
 	int y;
-};
+} Action;
 
 typedef struct get_action_thread_params {
     void* pl;

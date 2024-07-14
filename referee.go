@@ -7,6 +7,8 @@ import (
 	"unsafe"
 )
 
+import "C"
+
 func Allies(playerId int, bots []Bot) []Bot {
 	allies := []Bot{}
 	for _, bot := range bots {
@@ -29,10 +31,10 @@ func Enemies(playerId int, bots []Bot) []Bot {
 	return enemies
 }
 
-func RemoveBotsOnSpawn(bots []Bot, grid map[Location]LocationType) []Bot {
+func RemoveBotsOnSpawn(bots []Bot) []Bot {
 	filteredBots := []Bot{}
 	for _, bot := range bots {
-		if grid[Location{x: bot.x, y: bot.y}] != SPAWN {
+		if LocationType(GRID[C.int(bot.x)][C.int(bot.y)]) != SPAWN {
 			filteredBots = append(filteredBots, bot)
 		}
 	}
@@ -49,13 +51,17 @@ func RemoveDeadBots(bots map[int]Bot) []Bot {
 	return filteredBots
 }
 
-func GenerateSpawnLocations(spawnLocations []Location) []Location {
+func GenerateSpawnLocations() []Location {
 	selectedSpawnLocations := []Location{}
 	for i := 0; i < SPAWN_COUNT; i++ {
 		validSpawn := false
 		var newSpawn Location
 		for !validSpawn {
-			newSpawn = spawnLocations[rand.Intn(len(spawnLocations))]
+			spawnIndex := rand.Intn(SPAWN_LEN)
+			newSpawn = Location{
+				x: int(SPAWN_LOCATIONS[C.int(spawnIndex)].x),
+				y: int(SPAWN_LOCATIONS[C.int(spawnIndex)].y),
+			}
 			validSpawn = true
 			for _, spawn := range selectedSpawnLocations {
 				if (spawn == newSpawn) ||
@@ -70,7 +76,7 @@ func GenerateSpawnLocations(spawnLocations []Location) []Location {
 	return selectedSpawnLocations
 }
 
-func ClaimLocation(loc Location, bot Bot, claimedMoves map[Location][]Bot, grid map[Location]LocationType) {
+func ClaimLocation(loc Location, bot Bot, claimedMoves map[Location][]Bot) {
 	botLoc := Location{x: bot.x, y: bot.y}
 	otherBots, ok := claimedMoves[loc]
 	if !ok {
@@ -118,18 +124,18 @@ func ClaimLocation(loc Location, bot Bot, claimedMoves map[Location][]Bot, grid 
 	for _, otherBot := range otherBots {
 		if otherBot.id != bot.id {
 			otherBotLoc := Location{x: otherBot.x, y: otherBot.y}
-			ClaimLocation(otherBotLoc, otherBot, claimedMoves, grid)
+			ClaimLocation(otherBotLoc, otherBot, claimedMoves)
 		}
 	}
 
 }
 
-func printGrid(currentGameState map[int]BotState, grid map[Location]LocationType) {
+func printGrid(currentGameState map[int]BotState) {
 	gameStateAsStr := ""
 	for i := 0; i < GRID_SIZE; i++ {
 		for j := 0; j < GRID_SIZE; j++ {
 			tile := " "
-			if grid[Location{x: j, y: i}] == OBSTACLE {
+			if LocationType(GRID[C.int(j)][C.int(i)]) == OBSTACLE {
 				tile = "#"
 			}
 			gameStateAsStr += tile + " "
@@ -154,28 +160,6 @@ func printGrid(currentGameState map[int]BotState, grid map[Location]LocationType
 func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]BotState, error) {
 	game := []map[int]BotState{}
 
-	// TODO: precompute
-	spawnLocations := []Location{}
-	grid := map[Location]LocationType{}
-	center := (GRID_SIZE - 1) / 2
-	min2 := (ARENA_RADIUS - 0.5) * (ARENA_RADIUS - 0.5)
-	max2 := (ARENA_RADIUS + 0.5) * (ARENA_RADIUS + 0.5)
-	for i := 0; i < GRID_SIZE; i++ {
-		for j := 0; j < GRID_SIZE; j++ {
-			loc := Location{x: i, y: j}
-			d2 := (float64(i-center))*(float64(i-center)) +
-				(float64(j-center))*(float64(j-center))
-			if d2 < min2 {
-				grid[loc] = NORMAL
-			} else if d2 < max2 {
-				spawnLocations = append(spawnLocations, Location{x: i, y: j})
-				grid[loc] = SPAWN
-			} else {
-				grid[loc] = OBSTACLE
-			}
-		}
-	}
-
 	allBots := []Bot{}
 	warningCount1 := 0
 	warningCount2 := 0
@@ -185,9 +169,9 @@ func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]BotState, error
 		// Spawn
 		if turn%SPAWN_DELAY == 0 {
 			// Kill bots on spawn tiles
-			allBots = RemoveBotsOnSpawn(allBots, grid)
+			allBots = RemoveBotsOnSpawn(allBots)
 			// Generate random spawns
-			newSpawnLocations := GenerateSpawnLocations(spawnLocations)
+			newSpawnLocations := GenerateSpawnLocations()
 			for _, loc := range newSpawnLocations {
 				lastId += 1
 				allBots = append(allBots, Bot{
@@ -260,12 +244,13 @@ func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]BotState, error
 		}
 		game = append(game, currentGameState)
 		fmt.Printf("turn %d\n", len(game))
-		printGrid(currentGameState, grid)
+		printGrid(currentGameState)
 
 		// Apply actions
 		for id, botState := range game[len(game)-1] {
 			nextLoc := Location{x: botState.action.x, y: botState.action.y}
-			if (botState.action.actionType == MOVE || botState.action.actionType == ATTACK) && grid[nextLoc] == OBSTACLE {
+			if (botState.action.actionType == MOVE || botState.action.actionType == ATTACK) &&
+				LocationType(GRID[C.int(nextLoc.x)][C.int(nextLoc.y)]) == OBSTACLE {
 				guardAction := Action{actionType: GUARD, x: botState.bot.x, y: botState.bot.y}
 				botState.action = guardAction
 				game[len(game)-1][id] = botState
@@ -279,7 +264,7 @@ func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]BotState, error
 			} else {
 				loc = Location{x: botState.bot.x, y: botState.bot.y}
 			}
-			ClaimLocation(loc, botState.bot, claimedMoves, grid)
+			ClaimLocation(loc, botState.bot, claimedMoves)
 		}
 		updatedBots := map[int]Bot{}
 		// Move bots
@@ -369,6 +354,6 @@ func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]BotState, error
 	}
 	game = append(game, currentGameState)
 	fmt.Println("RESULT")
-	printGrid(currentGameState, grid)
+	printGrid(currentGameState)
 	return game, nil
 }

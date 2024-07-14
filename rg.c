@@ -1,10 +1,7 @@
-#include <pthread.h>
 #include <unistd.h>
 #include "debug.h"
 #include "rg.h"
-
-#define ARENA_RADIUS 8
-#define GRID_SIZE 2*ARENA_RADIUS + 3
+#include "grid.c"
 
 int get_action(void* pl, void* paction, int bot_id) {
     int clean_stack_size = lua_gettop(pl);
@@ -55,7 +52,7 @@ int get_action(void* pl, void* paction, int bot_id) {
     lua_getfield(pl, -1, "actionType");
     if (lua_isinteger(pl, -1)){
         int val = lua_tointeger(pl, -1);
-        ((struct Action*)paction)->actionType = val;
+        ((Action*)paction)->actionType = val;
     } else {
         err = 104;
     }
@@ -64,7 +61,7 @@ int get_action(void* pl, void* paction, int bot_id) {
     lua_getfield(pl, -1, "x");
     if (lua_isinteger(pl, -1)){
         int val = lua_tointeger(pl, -1);
-        ((struct Action*)paction)->x = val;
+        ((Action*)paction)->x = val;
     } else if (!lua_isnoneornil(pl, -1)) {
         err = 105;
     }
@@ -73,7 +70,7 @@ int get_action(void* pl, void* paction, int bot_id) {
     lua_getfield(pl, -1, "y");
     if (lua_isinteger(pl, -1)){
         int val = lua_tointeger(pl, -1);
-        ((struct Action*)paction)->y = val;
+        ((Action*)paction)->y = val;
     } else if (!lua_isnoneornil(pl, -1)) {
         err = 105;
     }
