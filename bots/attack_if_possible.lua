@@ -1,5 +1,5 @@
 function act(self, game)
-    locs = rg.locs_around(self.location)
+    locs = rg.locs_around(self.location, { OBSTACLE })
     
     i = 1
     while locs[i] ~= nil do

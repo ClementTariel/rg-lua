@@ -340,6 +340,81 @@ int create_loc_table_in_lua(lua_State* pl) {
 
 int rg_locs_around_in_lua(lua_State* pl) {
     int argc = lua_gettop(pl);
+    if (argc < 1 || argc > 2){
+        return 0;
+    }
+    lua_getfield(pl, 1, "x");
+    if (!lua_isinteger(pl, -1)){
+        return 0;
+    }
+    int x = lua_tointeger(pl, -1);
+    lua_getfield(pl, 1, "y");
+    if (!lua_isinteger(pl, -1)){
+        return 0;
+    }
+    int y = lua_tointeger(pl, -1);
+    bool filter_out_normal = false;
+    bool filter_out_spawn = false;
+    bool filter_out_obstacle = false;
+    if (argc == 2){
+        if (!lua_istable(pl, 2)){
+            return 0;
+        }
+        lua_pushvalue(pl, 2);
+        lua_pushnil(pl);
+        // stack : -1 => nil; -2 => table;
+        while (lua_next(pl, -2) != 0){
+            // stack : -1 => value; -2 => key; -3 => table;
+            if (!lua_isinteger(pl, -1)){
+                return 0;
+            }
+            int loc_type = lua_tointeger(pl, -1);
+            lua_pop(pl,1);
+            // stack now contains: -1 => key; -2 => table
+            if (loc_type == NORMAL){
+                filter_out_normal = true;
+            } else if (loc_type == SPAWN){
+                filter_out_spawn = true;
+            } else if (loc_type == OBSTACLE){
+                filter_out_obstacle = true;
+            } else {
+                return 0;
+            }
+        }
+    }
+    lua_createtable(pl, 4, 0);
+    int loc_count = 0;
+    for (int i=0; i<4; i++){
+        int loc_x = x + (i%2) * ((i-2)%4);
+        int loc_y = y + ((i+1)%2) * ((i-1)%4);
+        int loc_type = OBSTACLE;
+        if (loc_x > 0 && loc_x < GRID_SIZE && loc_y > 0 && loc_y < GRID_SIZE){
+            loc_type = GRID[loc_x][loc_y];
+        }
+        bool filtered_out = false;
+        if (loc_type == NORMAL){
+            filtered_out = filter_out_normal;
+        } else if (loc_type == SPAWN){
+            filtered_out = filter_out_spawn;
+        } else if (loc_type == OBSTACLE){
+            filtered_out = filter_out_obstacle;
+        } 
+        if (!filtered_out){
+            loc_count++;
+            lua_pushcfunction(pl, create_loc_in_lua);
+            lua_pushinteger(pl, loc_x);
+            lua_pushinteger(pl, loc_y);
+            if (lua_pcall(pl, 2, 1, 0) != 0){
+                return 0;
+            }
+            lua_seti(pl, -2, loc_count);
+        }
+    }
+    return 1;
+}
+
+int rg_loc_type_in_lua(lua_State* pl) {
+    int argc = lua_gettop(pl);
     if (argc != 1){
         return 0;
     }
@@ -353,15 +428,10 @@ int rg_locs_around_in_lua(lua_State* pl) {
         return 0;
     }
     int y = lua_tointeger(pl, -1);
-    lua_createtable(pl, 4, 0);
-    for (int i=0; i<4; i++){
-        lua_pushcfunction(pl, create_loc_in_lua);
-        lua_pushinteger(pl, x + (i%2) * ((i-2)%4));
-        lua_pushinteger(pl, y + ((i+1)%2) * ((i-1)%4));
-        if (lua_pcall(pl, 2, 1, 0) != 0){
-            return 0;
-        }
-        lua_seti(pl, -2, i + 1);
+    if (x < 0 || y >= GRID_SIZE) {
+        lua_pushinteger(pl, OBSTACLE);
+    } else {
+        lua_pushinteger(pl, GRID[x][y]);
     }
     return 1;
 }
@@ -371,6 +441,7 @@ int luaopen_librobotgame(lua_State* pl)
     static const struct luaL_Reg robotGameLib [] = {
         {"wdist", rg_walk_dist_in_lua},
         {"locs_around", rg_locs_around_in_lua},
+        {"loc_type", rg_loc_type_in_lua},
         {"Loc", create_loc_in_lua},
         {"Robots", create_loc_table_in_lua},
         {NULL, NULL}

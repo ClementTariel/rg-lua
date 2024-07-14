@@ -213,6 +213,9 @@ func GetInitialisationScript() string {
 ATTACK = ` + fmt.Sprintf("%d", ATTACK) + `
 GUARD = ` + fmt.Sprintf("%d", GUARD) + `
 SUICIDE = ` + fmt.Sprintf("%d", SUICIDE) + `
+NORMAL = ` + fmt.Sprintf("%d", NORMAL) + `
+SPAWN = ` + fmt.Sprintf("%d", SPAWN) + `
+OBSTACLE = ` + fmt.Sprintf("%d", OBSTACLE) + `
 rg.SETTINGS = {
 	spawn_delay = ` + fmt.Sprintf("%d", SPAWN_DELAY) + `,
 	spawn_count = ` + fmt.Sprintf("%d", SPAWN_COUNT) + `,
