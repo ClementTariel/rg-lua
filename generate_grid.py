@@ -17,6 +17,10 @@ spawn_locations = []
 
 content = "#include \"rg.h\"\n"
 content += "\n"
+content += "#define N NORMAL\n"
+content += "#define S SPAWN\n"
+content += "#define O OBSTACLE\n"
+content += "\n"
 content += "#define ARENA_RADIUS " + str(radius) + "\n"
 content += "#define GRID_SIZE "+str(grid_size)+"\n"
 
@@ -30,12 +34,12 @@ for i in range(grid_size):
             grid_content += ", "
         d2 = (i-center)*(i-center) + (j-center)*(j-center)
         if d2 < min2 :
-            grid_content += "NORMAL"
+            grid_content += "N"
         elif d2 < max2 :
             spawn_locations.append("(Location){.x = "+str(i)+", .y = "+str(j)+"}")
-            grid_content += "SPAWN"
+            grid_content += "S"
         else :
-            grid_content += "OBSTACLE"
+            grid_content += "O"
     grid_content += "}"
 grid_content += "\n};\n"
 
