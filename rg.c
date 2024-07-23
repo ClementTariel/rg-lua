@@ -141,7 +141,7 @@ int rg_walk_dist_in_lua(lua_State* pl) {
     if (argc != 2){
         return 0;
     }
-    if (!(lua_istable(pl, 1) && lua_istable(pl, 2)) ) {
+    if (!(lua_istable(pl, 1) && lua_istable(pl, 2))) {
         return 0;
     }
     lua_getfield(pl, 1, "x");
@@ -436,12 +436,76 @@ int rg_loc_type_in_lua(lua_State* pl) {
     return 1;
 }
 
+int rg_toward_in_lua(lua_State* pl) {
+    int argc = lua_gettop(pl);
+    if (argc != 2){
+        return 0;
+    }
+    if (!(lua_istable(pl, 1) && lua_istable(pl, 2))) {
+        return 0;
+    }
+    lua_getfield(pl, 1, "x");
+    if (!lua_isinteger(pl, -1)){
+        return 0;
+    }
+    int x1 = lua_tointeger(pl, -1);
+    lua_getfield(pl, 1, "y");
+    if (!lua_isinteger(pl, -1)){
+        return 0;
+    }
+    int y1 = lua_tointeger(pl, -1);
+    lua_getfield(pl, 2, "x");
+    if (!lua_isinteger(pl, -1)){
+        return 0;
+    }
+    int x2 = lua_tointeger(pl, -1);
+    lua_getfield(pl, 2, "y");
+    if (!lua_isinteger(pl, -1)){
+        return 0;
+    }
+    int y2 = lua_tointeger(pl, -1);
+    int loc_x = x1;
+    int loc_y = y1;
+    if (x1 != x2 || y1 != y2){
+        for (int i=0; i<4; i++){
+            int x = x1 + (i%2) * ((i-2)%4);
+            int y = y1 + ((i+1)%2) * ((i-1)%4);
+            if (abs(x2-loc_x) + abs(y2-loc_y) > abs(x2-x) + abs(y2-y)){
+                loc_x = x;
+                loc_y = y;
+                continue;
+            }
+            if (abs(x2-loc_x) + abs(y2-loc_y) < abs(x2-x) + abs(y2-y)){
+                continue;
+            }
+            if (abs(x2-loc_x) * abs(y2-loc_y) < abs(x2-x) * abs(y2-y)){
+                loc_x = x;
+                loc_y = y;
+                continue;
+            }
+            if ((x2-x1)*(loc_y-y1) - (y2-y1)*(loc_x-x1) < (x2-x1)*(y-y1) - (y2-y1)*(x-x1)){
+                loc_x = x;
+                loc_y = y;
+                continue;
+            }
+        }
+    }
+    lua_pushcfunction(pl, create_loc_in_lua);
+    lua_pushinteger(pl, loc_x);
+    lua_pushinteger(pl, loc_y);
+    if (lua_pcall(pl, 2, 1, 0) != 0){
+        return 0;
+    }
+    return 1;
+}
+
 int luaopen_librobotgame(lua_State* pl)
 {
     static const struct luaL_Reg robotGameLib [] = {
         {"wdist", rg_walk_dist_in_lua},
         {"locs_around", rg_locs_around_in_lua},
         {"loc_type", rg_loc_type_in_lua},
+        {"toward", rg_toward_in_lua},
         {"Loc", create_loc_in_lua},
         {"Robots", create_loc_table_in_lua},
         {NULL, NULL}

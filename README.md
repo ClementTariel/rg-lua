@@ -70,6 +70,7 @@ an object `rg` is accessible by all robots, with the following functions and pro
 - `wdist(loc1, loc2)` : A function that returns the walking distance between Locations `loc1`  and `loc2`.
 - `loc_type(loc)` : A function hat returns the type of a Location. a Location types are `OBSTACLE` for tiles outside of the arena, `SPAWN` for tiles where robots can spawn (border of the arena) and `NORMAL` for other tiles of the arena. The Location type of a tile stay the same during the game (a `NORMAL` tile will stay of type `NORMAL` even if occupied by a robot).
 - `locs_around(loc)` : A function that returns the list of Locations around the Location `loc`. An optional list of location types to filter out can also be passed: `locs_around(loc, { SPAWN, OBSTACLE })` will remove from its output all tiles of type `SPAWN` or `OBSTACLE`.
+- `toward(loc1, loc2)` : A function that returns the Location to move to from `loc1` in order to go to `loc2`.
 - `CENTER_POINT = rg.Loc(9, 9)` : A Location corresponding to the center of the arena.
 - `GRID_SIZE = 19` : The size of the grid.
 - `ARENA_RADIUS = 8` : The radius of the area (The spawn tiles at the border of the arena have a distance to the center between `ARENA_RADIUS - 0.5` and `ARENA_RADIUS + 0.5` tiles).

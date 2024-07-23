@@ -38,8 +38,4 @@ void* timeout_function(void* ptimeout);
 
 int getActionWithTimeoutBridge(void* pl, void* paction, int bot_id, int timeout);
 
-int rgWalkDistInLua(lua_State* pl);
-
-int rgLocsAroundInLua(lua_State* pl);
-
 #endif
