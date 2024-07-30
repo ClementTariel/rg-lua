@@ -89,7 +89,8 @@ end
 
 an object `rg` is accessible by all robots, with the following functions and properties :
 - `Loc(x, y)` : A function that returns a Location `{ x=x, y=y }` that can be directly compared to another Location. For example `rg.Loc(9, 9) == rg.Loc(9, 9)` and `rg.Loc(9, 9) == { x=9, y=9 }` will both return `true` when `{ x=9, y=9 } == { x=9, y=9 }` will return `false`.
-- `wdist(loc1, loc2)` : A function that returns the walking distance between Locations `loc1`  and `loc2`.
+- `wdist(loc1, loc2)` : A function that returns the walking distance (manhattan distance) between Locations `loc1`  and `loc2`.
+- `dist(loc1, loc2)` : A function that returns the euclidean distance between Locations `loc1`  and `loc2`.
 - `loc_type(loc)` : A function hat returns the type of a Location. a Location types are `OBSTACLE` for tiles outside of the arena, `SPAWN` for tiles where robots can spawn (border of the arena) and `NORMAL` for other tiles of the arena. The Location type of a tile stay the same during the game (a `NORMAL` tile will stay of type `NORMAL` even if occupied by a robot).
 - `locs_around(loc)` : A function that returns the list of Locations around the Location `loc`. An optional list of location types to filter out can also be passed: `locs_around(loc, { SPAWN, OBSTACLE })` will remove from its output all tiles of type `SPAWN` or `OBSTACLE`.
 - `toward(loc1, loc2)` : A function that returns the Location to move to from `loc1` in order to go to `loc2`.

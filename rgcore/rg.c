@@ -1,4 +1,5 @@
 #include <unistd.h>
+#include <math.h>
 #include "debug/debug.h"
 #include "rg.h"
 #include "grid.c"
@@ -166,6 +167,39 @@ int rg_walk_dist_in_lua(lua_State* pl) {
     int y2 = lua_tointeger(pl, -1);
     int d = abs(x1 - x2) + abs(y1 - y2);
     lua_pushinteger(pl, d);
+    return 1;
+}
+
+int rg_dist_in_lua(lua_State* pl) {
+    int argc = lua_gettop(pl);
+    if (argc != 2){
+        return 0;
+    }
+    if (!(lua_istable(pl, 1) && lua_istable(pl, 2))) {
+        return 0;
+    }
+    lua_getfield(pl, 1, "x");
+    if (!lua_isinteger(pl, -1)){
+        return 0;
+    }
+    int x1 = lua_tointeger(pl, -1);
+    lua_getfield(pl, 1, "y");
+    if (!lua_isinteger(pl, -1)){
+        return 0;
+    }
+    int y1 = lua_tointeger(pl, -1);
+    lua_getfield(pl, 2, "x");
+    if (!lua_isinteger(pl, -1)){
+        return 0;
+    }
+    int x2 = lua_tointeger(pl, -1);
+    lua_getfield(pl, 2, "y");
+    if (!lua_isinteger(pl, -1)){
+        return 0;
+    }
+    int y2 = lua_tointeger(pl, -1);
+    double d = sqrt((double)((x1 - x2)*(x1 - x2) + (y1 - y2)*(y1 - y2)));
+    lua_pushnumber(pl, d);
     return 1;
 }
 
@@ -506,6 +540,7 @@ int luaopen_librobotgame(lua_State* pl)
 {
     static const struct luaL_Reg robotGameLib [] = {
         {"wdist", rg_walk_dist_in_lua},
+        {"dist", rg_dist_in_lua},
         {"locs_around", rg_locs_around_in_lua},
         {"loc_type", rg_loc_type_in_lua},
         {"toward", rg_toward_in_lua},

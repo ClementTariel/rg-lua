@@ -1,5 +1,4 @@
 function act(self, game)
-    locs = rg.locs_around(self.location)
     loc = rg.toward(self.location, rg.CENTER_POINT)
     if (game[loc] ~= nil) then
         return { actionType=GUARD } 
