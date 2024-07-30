@@ -16,9 +16,31 @@ You need [golang](https://go.dev/) 1.21.4 and [lua 5.3](https://www.lua.org/vers
 
 ## Getting started
 
-To run locally a match between PATH/TO/LUA/BOT1 and PATH/TO/LUA/BOT2 use the following command: `go run debug.go lua.go rg.go player.go referee.go main.go PATH/TO/LUA/BOT1 PATH/TO/LUA/BOT2`
+### Build
 
-*Note: The first time you run it after an update, run go with the `-a` flag to make sure C files are recompiled: `go run -a debug.go lua.go rg.go player.go referee.go main.go PATH/TO/LUA/BOT1 PATH/TO/LUA/BOT2`*
+You need to build the first time you clone the repository and everytime you pull some changes.
+
+To build you can simply run `make build`.
+
+Or you can manually run the same commands individually:
+
+```shell
+cd referee
+go install ../rgcore
+go install ../player
+go build -o ../rg.exe -a referee.go main.go
+cd ..
+```
+### Run
+
+Once the scripts are built, you can run matches locally.
+To run locally a match between PATH/TO/LUA/BOT1 and PATH/TO/LUA/BOT2 use the following command: `./rg.exe PATH/TO/LUA/BOT1 PATH/TO/LUA/BOT2`.
+
+exemple
+```shell
+./rg.exe bots/random.lua bots/random.lua
+```
+
 
 Checkout the [Documentation](#documentation) section to learn how to create your own robot.
 

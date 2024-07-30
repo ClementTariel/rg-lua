@@ -1,4 +1,4 @@
-package main
+package rgcore
 
 import (
 	"errors"
@@ -9,7 +9,7 @@ import (
 )
 
 /*
-#cgo LDFLAGS: -L/usr/lib/x86_64-linux-gnu/ -lm -llua5.3
+#cgo LDFLAGS: -L/usr/lib/x86_64-linux-gnu/ -lm -llua5.3 -Wl,--allow-multiple-definition
 #cgo CFLAGS: -I/usr/include/lua5.3/
 #include "luaBridge.h"
 #include "luaBridge.c"

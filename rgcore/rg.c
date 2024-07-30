@@ -1,5 +1,5 @@
 #include <unistd.h>
-#include "debug.h"
+#include "debug/debug.h"
 #include "rg.h"
 #include "grid.c"
 
@@ -385,8 +385,8 @@ int rg_locs_around_in_lua(lua_State* pl) {
     lua_createtable(pl, 4, 0);
     int loc_count = 0;
     for (int i=0; i<4; i++){
-        int loc_x = x + (i%2) * ((i-2)%4);
-        int loc_y = y + ((i+1)%2) * ((i-1)%4);
+        int loc_x = x + (i%2) * (i-2);
+        int loc_y = y + ((i+1)%2) * (i-1);
         int loc_type = OBSTACLE;
         if (loc_x > 0 && loc_x < GRID_SIZE && loc_y > 0 && loc_y < GRID_SIZE){
             loc_type = GRID[loc_x][loc_y];
@@ -468,8 +468,8 @@ int rg_toward_in_lua(lua_State* pl) {
     int loc_y = y1;
     if (x1 != x2 || y1 != y2){
         for (int i=0; i<4; i++){
-            int x = x1 + (i%2) * ((i-2)%4);
-            int y = y1 + ((i+1)%2) * ((i-1)%4);
+            int x = x1 + (i%2) * (i-2);
+            int y = y1 + ((i+1)%2) * (i-1);
             if (abs(x2-loc_x) + abs(y2-loc_y) > abs(x2-x) + abs(y2-y)){
                 loc_x = x;
                 loc_y = y;
@@ -481,6 +481,9 @@ int rg_toward_in_lua(lua_State* pl) {
             if (abs(x2-loc_x) * abs(y2-loc_y) < abs(x2-x) * abs(y2-y)){
                 loc_x = x;
                 loc_y = y;
+                continue;
+            }
+            if (abs(x2-loc_x) * abs(y2-loc_y) > abs(x2-x) * abs(y2-y)){
                 continue;
             }
             if ((x2-x1)*(loc_y-y1) - (y2-y1)*(loc_x-x1) < (x2-x1)*(y-y1) - (y2-y1)*(x-x1)){

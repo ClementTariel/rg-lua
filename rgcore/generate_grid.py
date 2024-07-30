@@ -36,7 +36,7 @@ for i in range(grid_size):
         if d2 < min2 :
             grid_content += "N"
         elif d2 < max2 :
-            spawn_locations.append("(Location){.x = "+str(i)+", .y = "+str(j)+"}")
+            spawn_locations.append("(Location){.X = "+str(i)+", .Y = "+str(j)+"}")
             grid_content += "S"
         else :
             grid_content += "O"

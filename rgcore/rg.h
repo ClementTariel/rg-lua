@@ -11,8 +11,8 @@ enum ActionType { MOVE = 0, ATTACK= 1, GUARD = 2, SUICIDE = 3};
 enum LocType { NORMAL = 4, SPAWN = 5, OBSTACLE = 6};
 
 typedef struct Location {
-	int x;
-	int y;
+	int X;
+	int Y;
 } Location;
 
 typedef struct Action {
