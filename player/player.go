@@ -1,4 +1,4 @@
-package player
+package main
 
 import (
 	"errors"
@@ -8,7 +8,40 @@ import (
 	"github.com/ClementTariel/rg-lua/rgcore"
 )
 
-func ResetGame(pl unsafe.Pointer, turn int) error {
+var pl unsafe.Pointer
+var running = false
+var err error
+
+func KillCurrentMatch() bool {
+	rgcore.VPrintln("kill")
+	killed := false
+	if running {
+		killed = true
+		running = false
+		// TODO: may need additional step to avoid some issue on the long term,
+		// depending on how memory is cleared by lua, with potential memory leak or fragmentation
+		rgcore.CloseState(pl)
+	}
+	rgcore.VPrintf("kill status: %v\n", killed)
+	return killed
+}
+
+func InitNewMatch(name string, script string) (int, error) {
+	KillCurrentMatch()
+	pl = rgcore.NewState()
+	rgcore.PushFunction(pl, rgcore.GetPrintInLuaFunctionPointer(), "print")
+	var warningCount int
+	warningCount, err = rgcore.InitRG(pl, script, name)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return warningCount, err
+	}
+	rgcore.VPrintln("[Successfully initialized]")
+	running = true
+	return warningCount, nil
+}
+
+func ResetGame(turn int) error {
 	const resetScript = `__RG_CORE_SYSTEM.game.robots = rg.Robots()
 for i = 0,%[1]d-1,1 do
 	__RG_CORE_SYSTEM.game.robots[i] = {}
@@ -18,7 +51,7 @@ __RG_CORE_SYSTEM.game.turn = %[2]d
 	return rgcore.RunScript(pl, fmt.Sprintf(resetScript, rgcore.GRID_SIZE, turn), "[reset game data]")
 }
 
-func LoadGameBot(pl unsafe.Pointer, bot rgcore.Bot) error {
+func LoadGameBot(bot rgcore.Bot) error {
 	botId := "nil"
 	if (bot.Id) > 0 {
 		botId = fmt.Sprintf("%d", bot.Id)
@@ -39,7 +72,7 @@ func LoadGameBot(pl unsafe.Pointer, bot rgcore.Bot) error {
 		fmt.Sprintf("[loading game data - %s]", botDescription))
 }
 
-func LoadSelf(pl unsafe.Pointer, bot rgcore.Bot) error {
+func LoadSelf(bot rgcore.Bot) error {
 	const loadScript = `if __RG_CORE_SYSTEM.self[%[5]d] == nil then
 	__RG_CORE_SYSTEM.self[%[5]d] = {}
 end
@@ -54,8 +87,8 @@ __RG_CORE_SYSTEM.self[%[5]d].id = %[5]d
 		fmt.Sprintf("[loading self data - bot %d]", bot.Id))
 }
 
-func PlayTurn(pl unsafe.Pointer, turn int, allies []rgcore.Bot, enemies []rgcore.Bot, warningCount int) (map[int]rgcore.Action, int) {
-	err := ResetGame(pl, turn)
+func PlayTurn(turn int, allies []rgcore.Bot, enemies []rgcore.Bot, warningCount int) (map[int]rgcore.Action, int) {
+	err := ResetGame(turn)
 	if err != nil {
 		fmt.Printf("error when reseting game: %v\n", err)
 		warningCount = rgcore.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
@@ -63,7 +96,7 @@ func PlayTurn(pl unsafe.Pointer, turn int, allies []rgcore.Bot, enemies []rgcore
 	actions := map[int]rgcore.Action{}
 	if !(warningCount > rgcore.WARNING_TOLERANCE) {
 		for _, bot := range allies {
-			err = LoadGameBot(pl, bot)
+			err = LoadGameBot(bot)
 			if err != nil {
 				fmt.Printf("error when loading game bot %v: %v\n", bot, err)
 				warningCount = rgcore.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
@@ -72,7 +105,7 @@ func PlayTurn(pl unsafe.Pointer, turn int, allies []rgcore.Bot, enemies []rgcore
 		}
 		if warningCount <= rgcore.WARNING_TOLERANCE {
 			for _, bot := range enemies {
-				err = LoadGameBot(pl, bot)
+				err = LoadGameBot(bot)
 				if err != nil {
 					fmt.Printf("error when loading game bot %v: %v\n", bot, err)
 					warningCount = rgcore.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
@@ -88,7 +121,7 @@ func PlayTurn(pl unsafe.Pointer, turn int, allies []rgcore.Bot, enemies []rgcore
 			Y:          -1,
 		}
 		if !(warningCount > rgcore.WARNING_TOLERANCE) {
-			err = LoadSelf(pl, bot)
+			err = LoadSelf(bot)
 			if err != nil {
 				fmt.Printf("error when loading self (bot %v) %v\n", bot, err)
 				warningCount = rgcore.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
@@ -106,8 +139,8 @@ func PlayTurn(pl unsafe.Pointer, turn int, allies []rgcore.Bot, enemies []rgcore
 				action.ActionType = rgcore.GUARD
 				action.X = -1
 				action.Y = -1
-			} else if err != nil {
-				fmt.Printf("disqualifed because of %v\n", err)
+			} else if errors.Unwrap(err) != nil {
+				fmt.Printf("disqualified because of %v\n", err)
 				warningCount = rgcore.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
 			}
 			if warningCount > rgcore.WARNING_TOLERANCE {

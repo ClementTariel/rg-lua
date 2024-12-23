@@ -1,8 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
+	"log"
+	"net/http"
 	"os"
 
 	"github.com/ClementTariel/rg-lua/rgcore"
@@ -39,9 +42,35 @@ func GetFileSize(filepath string) (int64, error) {
 	return fi.Size(), nil
 }
 
+func callPost(url string, postBody []byte) (*http.Response, error) {
+	responseBody := bytes.NewBuffer(postBody)
+	rgcore.VPrintln("call POST")
+	resp, err := http.Post(url, "application/json", responseBody)
+	if err != nil {
+		log.Fatalf("An Error Occured %v", err)
+	}
+	return resp, err
+}
+
+func callGet(url string) (*http.Response, error) {
+	rgcore.VPrintln("call GET")
+	resp, err := http.Get(url)
+	if err != nil {
+		log.Fatalf("An Error Occured %v", err)
+	}
+	return resp, err
+}
+
+// TODO: run game on api call not on start
 func main() {
+	// e := echo.New()
+	// e.GET("/", func(c echo.Context) error {
+	// 	return c.String(http.StatusOK, "Hello, World!")
+	// })
+	// e.Logger.Fatal(e.Start(":3333"))
+
 	var err error
-	rgcore.VPrintln("start main in player.go")
+	rgcore.VPrintln("start main in referee.go")
 	SetFlags()
 	rgcore.VPrintln("flags set")
 	tail := flag.Args()
@@ -52,12 +81,13 @@ func main() {
 
 	fileName1 := tail[0]
 	fileName2 := tail[1]
+
 	fileSize1, err := GetFileSize(fileName1)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		return
 	} else if fileSize1 > MAX_FILE_SIZE {
-		fmt.Printf("max fiel size exceeded: %v/%v\n", fileSize1, MAX_FILE_SIZE)
+		fmt.Printf("max file size exceeded: %v/%v\n", fileSize1, MAX_FILE_SIZE)
 		return
 	}
 	fileSize2, err := GetFileSize(fileName2)
@@ -65,7 +95,7 @@ func main() {
 		fmt.Printf("%v\n", err)
 		return
 	} else if fileSize2 > MAX_FILE_SIZE {
-		fmt.Printf("max fiel size exceeded: %v/%v\n", fileSize2, MAX_FILE_SIZE)
+		fmt.Printf("max file size exceeded: %v/%v\n", fileSize2, MAX_FILE_SIZE)
 		return
 	}
 
@@ -84,31 +114,13 @@ func main() {
 
 	rgcore.SetPrintMemoryBudget(PRINT_MEMORY_BUDGET)
 
-	pl1 := rgcore.NewState()
-	rgcore.PushFunction(pl1, rgcore.GetPrintInLuaFunctionPointer(), "print")
-	err = rgcore.InitRG(pl1, script1, fileName1)
+	rgcore.VPrintln("files read")
+	game, err := PlayGame(fileName1, script1, fileName2, script2)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		return
-	} else {
-		rgcore.VPrintln("[Successfully initialized]\n")
-	}
-	pl2 := rgcore.NewState()
-	rgcore.PushFunction(pl2, rgcore.GetPrintInLuaFunctionPointer(), "print")
-	err = rgcore.InitRG(pl2, script2, fileName2)
-
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	} else {
-		rgcore.VPrintln("[Successfully initialized]\n")
 	}
 
-	game, err := PlayGame(pl1, pl2)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
 	rgcore.VPrintf("game:\n%v\n", game)
 	score1 := 0
 	score2 := 0
@@ -121,9 +133,14 @@ func main() {
 	}
 	fmt.Printf("%v - %v\n", score1, score2)
 
-	rgcore.VPrintln("close state")
-	rgcore.CloseState(pl1)
-	rgcore.CloseState(pl2)
+	_, err = callGet(fmt.Sprintf("http://localhost:%d/kill", PORT_PLAYER_1))
+	if err != nil {
+		fmt.Printf("%v\n", err)
+	}
+	_, err = callGet(fmt.Sprintf("http://localhost:%d/kill", PORT_PLAYER_2))
+	if err != nil {
+		fmt.Printf("%v\n", err)
+	}
 
 	rgcore.VPrintln("end main in go")
 }

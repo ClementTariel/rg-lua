@@ -1,14 +1,63 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
+	"io"
 	"math/rand"
 	"strings"
-	"unsafe"
+	"sync"
 
-	"github.com/ClementTariel/rg-lua/player"
 	"github.com/ClementTariel/rg-lua/rgcore"
 )
+
+const PORT_PLAYER_1 = 1111
+const PORT_PLAYER_2 = 2222
+
+type InitRequest struct {
+	Name   string `json:"name"`
+	Script string `json:"script"`
+}
+
+type InitResponse struct {
+	WarningCount int `json:"warningCount"`
+}
+
+type PlayRequest struct {
+	Turn         int          `json:"turn"`
+	Allies       []rgcore.Bot `json:"allies"`
+	Enemies      []rgcore.Bot `json:"enemies"`
+	WarningCount int          `json:"warningCount"`
+}
+
+type PlayResponse struct {
+	Actions      map[int]rgcore.Action `json:"actions"`
+	WarningCount int                   `json:"warningCount"`
+}
+
+func playTurn(port int, turn int, allies []rgcore.Bot, enemies []rgcore.Bot, warningCount int) (map[int]rgcore.Action, int, error) {
+	postBody, _ := json.Marshal(PlayRequest{
+		Turn:         turn,
+		Allies:       allies,
+		Enemies:      enemies,
+		WarningCount: warningCount,
+	})
+	var playResponse PlayResponse
+	resp, err := callPost(fmt.Sprintf("http://localhost:%d/play", port), postBody)
+	if err != nil {
+		return map[int]rgcore.Action{}, rgcore.WARNING_TOLERANCE + 1, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return map[int]rgcore.Action{}, rgcore.WARNING_TOLERANCE + 1, err
+	}
+	err = json.Unmarshal(body, &playResponse)
+	if err != nil {
+		return map[int]rgcore.Action{}, rgcore.WARNING_TOLERANCE + 1, err
+	}
+	return playResponse.Actions, playResponse.WarningCount, nil
+}
 
 func Allies(playerId int, bots []rgcore.Bot) []rgcore.Bot {
 	allies := []rgcore.Bot{}
@@ -165,12 +214,65 @@ func printGrid(currentGameState map[int]rgcore.BotState) {
 	fmt.Printf("\033[47m%s\033[0m\n", gameStateAsStr)
 }
 
-func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]rgcore.BotState, error) {
+func InitPlayer(name string, script string, port int) (int, error) {
+	postBody, _ := json.Marshal(InitRequest{
+		Name:   name,
+		Script: script,
+	})
+	var initResponse InitResponse
+	resp, err := callPost(fmt.Sprintf("http://localhost:%d/init", port), postBody)
+	if err != nil {
+		return rgcore.WARNING_TOLERANCE + 1, err
+	}
+	defer resp.Body.Close()
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return rgcore.WARNING_TOLERANCE + 1, err
+	}
+	err = json.Unmarshal(body, &initResponse)
+	if err != nil {
+		return rgcore.WARNING_TOLERANCE + 1, err
+	}
+	return initResponse.WarningCount, nil
+}
+
+func InitGame(name1 string, script1 string, name2 string, script2 string) (int, int, error) {
+	var err1 error
+	warningCount1 := 0
+	var err2 error
+	warningCount2 := 0
+	wg := sync.WaitGroup{}
+	wg.Add(1)
+	go func() {
+		warningCount1, err1 = InitPlayer(name1, script1, PORT_PLAYER_1)
+		wg.Done()
+	}()
+	wg.Add(1)
+	go func() {
+		warningCount2, err2 = InitPlayer(name2, script2, PORT_PLAYER_2)
+		wg.Done()
+	}()
+	wg.Wait()
+	var err error
+	if err1 != nil {
+		err = err1
+	}
+	if err2 != nil {
+		err = err2
+	}
+	return warningCount1, warningCount2, err
+
+}
+
+func PlayGame(name1 string, script1 string, name2 string, script2 string) ([]map[int]rgcore.BotState, error) {
 	game := []map[int]rgcore.BotState{}
+	warningCount1, warningCount2, err := InitGame(name1, script1, name2, script2)
+
+	if err != nil {
+		return game, err
+	}
 
 	allBots := []rgcore.Bot{}
-	warningCount1 := 0
-	warningCount2 := 0
 
 	lastId := 0
 	for turn := 0; turn < rgcore.MAX_TURN; turn++ {
@@ -205,42 +307,48 @@ func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]rgcore.BotState
 
 		// Get actions
 		var actions1 map[int]rgcore.Action
-		if warningCount1 > rgcore.WARNING_TOLERANCE {
-			actions1 = map[int]rgcore.Action{}
-			for _, bot := range Allies(1, allBots) {
-				actions1[bot.Id] = rgcore.Action{
-					ActionType: rgcore.SUICIDE,
-					X:          -1,
-					Y:          -1,
-				}
-			}
-		} else {
-			actions1, warningCount1 = player.PlayTurn(
-				pl1,
-				turn,
-				Allies(1, allBots),
-				Enemies(1, allBots),
-				warningCount1)
-		}
-
 		var actions2 map[int]rgcore.Action
-		if warningCount2 > rgcore.WARNING_TOLERANCE {
-			actions2 = map[int]rgcore.Action{}
-			for _, bot := range Allies(2, allBots) {
-				actions2[bot.Id] = rgcore.Action{
-					ActionType: rgcore.SUICIDE,
-					X:          -1,
-					Y:          -1,
+		wg := sync.WaitGroup{}
+
+		wg.Add(1)
+		go func() {
+			var err = rgcore.DISQUALIFIED_ERROR.Err
+			if warningCount1 <= rgcore.WARNING_TOLERANCE {
+				actions1, warningCount1, err = playTurn(PORT_PLAYER_1, turn, Allies(1, allBots), Enemies(1, allBots), warningCount1)
+			}
+			if err != nil {
+				actions1 = map[int]rgcore.Action{}
+				for _, bot := range Allies(1, allBots) {
+					actions1[bot.Id] = rgcore.Action{
+						ActionType: rgcore.SUICIDE,
+						X:          -1,
+						Y:          -1,
+					}
 				}
 			}
-		} else {
-			actions2, warningCount2 = player.PlayTurn(
-				pl2,
-				turn,
-				Allies(2, allBots),
-				Enemies(2, allBots),
-				warningCount2)
-		}
+			wg.Done()
+		}()
+
+		wg.Add(1)
+		go func() {
+			var err = rgcore.DISQUALIFIED_ERROR.Err
+			if warningCount2 <= rgcore.WARNING_TOLERANCE {
+				actions2, warningCount2, err = playTurn(PORT_PLAYER_2, turn, Allies(2, allBots), Enemies(2, allBots), warningCount2)
+			}
+			if err != nil {
+				actions2 = map[int]rgcore.Action{}
+				for _, bot := range Allies(2, allBots) {
+					actions2[bot.Id] = rgcore.Action{
+						ActionType: rgcore.SUICIDE,
+						X:          -1,
+						Y:          -1,
+					}
+				}
+			}
+			wg.Done()
+		}()
+
+		wg.Wait()
 
 		// Add actions to game state
 		currentGameState := map[int]rgcore.BotState{}
@@ -356,6 +464,7 @@ func PlayGame(pl1 unsafe.Pointer, pl2 unsafe.Pointer) ([]map[int]rgcore.BotState
 		// Remove dead bots
 		allBots = RemoveDeadBots(updatedBots)
 	}
+	// TODO: kill players states (call "/kill")
 	// Add final state with all robot guarding
 	currentGameState := map[int]rgcore.BotState{}
 	for _, bot := range allBots {

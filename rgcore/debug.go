@@ -24,7 +24,7 @@ func VPrintf(format string, a ...any) (int, error) {
 	return 0, nil
 }
 
-func VPrintln(format string, a ...any) (int, error) {
+func VPrintln(a ...any) (int, error) {
 	if VERBOSE {
 		return fmt.Println(a...)
 	}

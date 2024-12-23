@@ -1,30 +1,50 @@
 #ifndef LUA_BRIDGE_H
 #define LUA_BRIDGE_H
 
+#include <stdbool.h>
+#include <pthread.h>
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
 
-int getStackBridge(void* pl, int depth, void* ptDebug);
+typedef struct pcall_thread_params
+{
+    void *pl;
+    int nargs;
+    int nresults;
+    int msgh;
+    int *perr;
+    bool *pdone;
+    pthread_mutex_t *pdone_mutex;
+    pthread_t timeout_thread_id;
+} pcall_thread_params;
 
-void getInfoBridge(void* pl, void* ptDebug);
+int GetStackBridge(void *pl, int depth, void *ptDebug);
 
-int debugCurrentLine(void* ptDebug);
+void GetInfoBridge(void *pl, void *ptDebug);
 
-const char* toStringBridge(void* pl, int idx);
+int DebugCurrentLine(void *ptDebug);
 
-void popStateBridge(void* pl, int idx);
+const char *ToStringBridge(void *pl, int idx);
 
-lua_State* newStateBridgeBridge();
+void PopStateBridge(void *pl, int idx);
 
-void closeBridge(void* pl);
+lua_State *NewStateBridge();
 
-void pushCFunctionBridge(void* pl, void* fn);
+void CloseBridge(void *pl);
 
-void setGlobalBridge(void* pl, const char *name);
+void PushCFunctionBridge(void *pl, void *fn);
 
-int loadStringBridge(void* pl, const char *s);
+void SetGlobalBridge(void *pl, const char *name);
 
-int pcallBridge(void* pl, int nargs, int nresults, int msgh);
+int LoadStringBridge(void *pl, const char *s);
+
+int PcallBridge(void *pl, int nargs, int nresults, int msgh);
+
+void *pcall_wrapper(void *pparams);
+
+void *timeout_function(void *ptimeout);
+
+int PcallWithTimeoutBridge(void *pl, int nargs, int nresults, int msgh, int timeout);
 
 #endif

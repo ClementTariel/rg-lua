@@ -7,35 +7,73 @@
 #include <lauxlib.h>
 #include <lualib.h>
 
-enum ActionType { MOVE = 0, ATTACK= 1, GUARD = 2, SUICIDE = 3};
-enum LocType { NORMAL = 4, SPAWN = 5, OBSTACLE = 6};
+enum ActionType
+{
+    MOVE = 0,
+    ATTACK = 1,
+    GUARD = 2,
+    SUICIDE = 3
+};
+enum LocType
+{
+    NORMAL = 4,
+    SPAWN = 5,
+    OBSTACLE = 6
+};
 
-typedef struct Location {
-	int X;
-	int Y;
+typedef struct Location
+{
+    int X;
+    int Y;
 } Location;
 
-typedef struct Action {
-	int actionType;
-	int x;
-	int y;
+typedef struct Action
+{
+    int actionType;
+    int x;
+    int y;
 } Action;
 
-typedef struct get_action_thread_params {
-    void* pl;
-    void* paction;
+typedef struct get_action_thread_params
+{
+    void *pl;
+    void *paction;
     int bot_id;
-    int* perr;
-    bool* pdone;
+    int *perr;
+    bool *pdone;
     pthread_t timeout_thread_id;
 } get_action_thread_params;
 
-int get_action(void* pl, void* paction, int bot_id);
+int get_action(void *pl, void *paction, int bot_id);
 
-void* get_action_wrapper(void* pparams);
+void *get_action_wrapper(void *pparams);
 
-void* timeout_function(void* ptimeout);
+int GetActionWithTimeoutBridge(void *pl, void *paction, int bot_id, int timeout);
 
-int getActionWithTimeoutBridge(void* pl, void* paction, int bot_id, int timeout);
+int rg_walk_dist_in_lua(lua_State *pl);
+
+int rg_dist_in_lua(lua_State *pl);
+
+int locs_equal_in_lua(lua_State *pl);
+
+int create_loc_in_lua(lua_State *pl);
+
+int custom_next(lua_State *pl);
+
+int robots_pairs_in_lua(lua_State *pl);
+
+int loc_map_index_in_lua(lua_State *pl);
+
+int create_loc_table_in_lua(lua_State *pl);
+
+int rg_locs_around_in_lua(lua_State *pl);
+
+int rg_loc_type_in_lua(lua_State *pl);
+
+int rg_toward_in_lua(lua_State *pl);
+
+int luaopen_librobotgame(lua_State *pl);
+
+void LoadRg(void *pl);
 
 #endif
