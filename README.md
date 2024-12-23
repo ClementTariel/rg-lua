@@ -25,20 +25,35 @@ To build you can simply run `make build`.
 Or you can manually run the same commands individually:
 
 ```shell
+cd player
+go install ../rgcore
+go build -a -o ../player.exe player.go main.go
+cd ..
 cd referee
 go install ../rgcore
-go install ../player
-go build -o ../rg.exe -a referee.go main.go
+go build -a -o ../rg.exe -a referee.go main.go
 cd ..
 ```
+
 ### Run
 
 Once the scripts are built, you can run matches locally.
-To run locally a match between PATH/TO/LUA/BOT1 and PATH/TO/LUA/BOT2 use the following command: `./rg.exe PATH/TO/LUA/BOT1 PATH/TO/LUA/BOT2`.
+
+First you need to run an instance of player for each of the two robots. In two different tabs run respectively:
+```shell
+# Lauch blue player
+./player.exe -blue
+```
+and:
+```shell
+# Launch red player
+./player.exe
+```
+To run locally a match between PATH/TO/LUA/BOT1 and PATH/TO/LUA/BOT2 you can then open a new terminal and use the following command: `./referee.exe PATH/TO/LUA/BOT1 PATH/TO/LUA/BOT2`.
 
 exemple
 ```shell
-./rg.exe bots/random.lua bots/random.lua
+./referee.exe bots/random.lua bots/random.lua
 ```
 
 

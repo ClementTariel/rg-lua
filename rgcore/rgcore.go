@@ -47,6 +47,9 @@ type (
 )
 
 const (
+	PORT_PLAYER_1 = 1111
+	PORT_PLAYER_2 = 2222
+
 	MOVE    = ActionType(C.MOVE)
 	ATTACK  = ActionType(C.ATTACK)
 	GUARD   = ActionType(C.GUARD)
@@ -71,7 +74,7 @@ const (
 	MAX_TURN          = 100
 
 	WARNING_TOLERANCE      = 3
-	BOT_INIT_TIME_BUDGET   = 100000
+	BOT_INIT_TIME_BUDGET   = 1000
 	BOT_ACTION_TIME_BUDGET = 10
 
 	RG_CORE_SYSTEM_CORRUPTED_ERROR_MESSAGE = "RGCoreSystemCorruptedError"

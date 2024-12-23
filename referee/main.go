@@ -133,11 +133,11 @@ func main() {
 	}
 	fmt.Printf("%v - %v\n", score1, score2)
 
-	_, err = callGet(fmt.Sprintf("http://localhost:%d/kill", PORT_PLAYER_1))
+	_, err = callGet(fmt.Sprintf("http://localhost:%d/kill", rgcore.PORT_PLAYER_1))
 	if err != nil {
 		fmt.Printf("%v\n", err)
 	}
-	_, err = callGet(fmt.Sprintf("http://localhost:%d/kill", PORT_PLAYER_2))
+	_, err = callGet(fmt.Sprintf("http://localhost:%d/kill", rgcore.PORT_PLAYER_2))
 	if err != nil {
 		fmt.Printf("%v\n", err)
 	}

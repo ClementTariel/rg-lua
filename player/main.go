@@ -12,6 +12,7 @@ import (
 )
 
 var PORT int
+var TRUE_BLUE bool
 
 type PlayRequest struct {
 	Turn         int          `json:"turn"`
@@ -37,8 +38,13 @@ type InitResponse struct {
 func SetFlags() {
 	flag.BoolVar(&rgcore.VERBOSE, "v", false, "")
 	flag.BoolVar(&rgcore.VERBOSE, "verbose", false, "Show more logs")
-	flag.IntVar(&PORT, "p", PORT, "")
+	flag.BoolVar(&TRUE_BLUE, "blue", false, "determine if the player is blue or red")
 	flag.Parse()
+	if TRUE_BLUE {
+		PORT = rgcore.PORT_PLAYER_1
+	} else {
+		PORT = rgcore.PORT_PLAYER_2
+	}
 }
 
 func main() {

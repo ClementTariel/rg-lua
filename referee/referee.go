@@ -11,9 +11,6 @@ import (
 	"github.com/ClementTariel/rg-lua/rgcore"
 )
 
-const PORT_PLAYER_1 = 1111
-const PORT_PLAYER_2 = 2222
-
 type InitRequest struct {
 	Name   string `json:"name"`
 	Script string `json:"script"`
@@ -244,12 +241,12 @@ func InitGame(name1 string, script1 string, name2 string, script2 string) (int, 
 	wg := sync.WaitGroup{}
 	wg.Add(1)
 	go func() {
-		warningCount1, err1 = InitPlayer(name1, script1, PORT_PLAYER_1)
+		warningCount1, err1 = InitPlayer(name1, script1, rgcore.PORT_PLAYER_1)
 		wg.Done()
 	}()
 	wg.Add(1)
 	go func() {
-		warningCount2, err2 = InitPlayer(name2, script2, PORT_PLAYER_2)
+		warningCount2, err2 = InitPlayer(name2, script2, rgcore.PORT_PLAYER_2)
 		wg.Done()
 	}()
 	wg.Wait()
@@ -314,7 +311,7 @@ func PlayGame(name1 string, script1 string, name2 string, script2 string) ([]map
 		go func() {
 			var err = rgcore.DISQUALIFIED_ERROR.Err
 			if warningCount1 <= rgcore.WARNING_TOLERANCE {
-				actions1, warningCount1, err = playTurn(PORT_PLAYER_1, turn, Allies(1, allBots), Enemies(1, allBots), warningCount1)
+				actions1, warningCount1, err = playTurn(rgcore.PORT_PLAYER_1, turn, Allies(1, allBots), Enemies(1, allBots), warningCount1)
 			}
 			if err != nil {
 				actions1 = map[int]rgcore.Action{}
@@ -333,7 +330,7 @@ func PlayGame(name1 string, script1 string, name2 string, script2 string) ([]map
 		go func() {
 			var err = rgcore.DISQUALIFIED_ERROR.Err
 			if warningCount2 <= rgcore.WARNING_TOLERANCE {
-				actions2, warningCount2, err = playTurn(PORT_PLAYER_2, turn, Allies(2, allBots), Enemies(2, allBots), warningCount2)
+				actions2, warningCount2, err = playTurn(rgcore.PORT_PLAYER_2, turn, Allies(2, allBots), Enemies(2, allBots), warningCount2)
 			}
 			if err != nil {
 				actions2 = map[int]rgcore.Action{}
