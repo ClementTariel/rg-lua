@@ -110,11 +110,11 @@ an object `rg` is accessible by all robots, with the following functions and pro
     - `spawn_count = 5` : The number of robots spawned for each team for each wave of spawns.
 	- `robot_hp = 50` : The maximum number of Health Points of a robot.
 	- `attack_range = 1` : The maximum distance to another bot for an attack to be valid.
-	- `attack_damage` : The min and max damages dealt by an attack :
+	- `attack_damage` : The min and max damage dealt by an attack :
         - `min = 8` : the minimum
         - `max = 10` : the maximum
-	- `suicide_damage = 15` : The damages dealt by a suicide.
-	- `collision_damage = 5` : The damages dealt by a collision.
+	- `suicide_damage = 15` : The damage dealt by a suicide.
+	- `collision_damage = 5` : The damage dealt by a collision.
     - `max_turn = 100` : The number of turns in a game.
 
 ### Rules
@@ -122,10 +122,10 @@ an object `rg` is accessible by all robots, with the following functions and pro
 Robots have 10ms to act, they have one action per turn: 
 - `MOVE` : moves the robot to an adjacent tile.
 - `ATTACK` : attack a tile at range.
-- `GUARD` : stay in place, protect against collision damages and take half damage from attacks and suicides.
-- `SUICIDE` : dies but deals damages to adjacent tiles.
+- `GUARD` : stay in place, protect against collision damage and take half damage from attacks and suicides.
+- `SUICIDE` : dies but deals damage to adjacent tiles.
 
-There are no friendly damages (collison, attack and suicide only deal damage to enemy robots).
+There are no friendly damage (collison, attack and suicide only deal damage to enemy robots).
 
 They are several waves in which robots spawn randomly, The team that have more robots at the end of the game wins.
 

@@ -339,16 +339,16 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 			updatedBot.Hp -= rgcore.COLLISION_DAMAGE * len(collisions)
 			updatedBots[updatedBot.Id] = updatedBot
 		}
-		// Attack & Suicide damages
-		damages := map[rgcore.Location]int{}
+		// Attack & Suicide damage
+		damage := map[rgcore.Location]int{}
 		for _, botState := range game[len(game)-1] {
 			if botState.Action.ActionType == rgcore.ATTACK {
 				loc := rgcore.Location{X: botState.Action.X, Y: botState.Action.Y}
-				currentDamages, ok := damages[loc]
+				currentDamage, ok := damage[loc]
 				if !ok {
-					currentDamages = 0
+					currentDamage = 0
 				}
-				damages[loc] = currentDamages +
+				damage[loc] = currentDamage +
 					rgcore.ATTACK_DAMAGE_MIN +
 					rand.Intn(rgcore.ATTACK_DAMAGE_MAX+1-rgcore.ATTACK_DAMAGE_MIN)
 			} else if botState.Action.ActionType == rgcore.SUICIDE {
@@ -359,26 +359,26 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 					x := botState.Bot.X + (i%2)*(i-2)
 					y := botState.Bot.Y + ((i+1)%2)*(i-1)
 					loc := rgcore.Location{X: x, Y: y}
-					currentDamages, ok := damages[loc]
+					currentDamage, ok := damage[loc]
 					if !ok {
-						currentDamages = 0
+						currentDamage = 0
 					}
-					damages[loc] = currentDamages + rgcore.SUICIDE_DAMAGE
+					damage[loc] = currentDamage + rgcore.SUICIDE_DAMAGE
 				}
 
 			}
 		}
 		for _, botState := range game[len(game)-1] {
 			loc := rgcore.Location{X: botState.Bot.X, Y: botState.Bot.Y}
-			totalDamages, ok := damages[loc]
+			totalDamage, ok := damage[loc]
 			if !ok {
 				continue
 			}
 			updatedBot := updatedBots[botState.Bot.Id]
 			if botState.Action.ActionType == rgcore.GUARD {
-				updatedBot.Hp -= totalDamages / 2
+				updatedBot.Hp -= totalDamage / 2
 			} else {
-				updatedBot.Hp -= totalDamages
+				updatedBot.Hp -= totalDamage
 			}
 			updatedBots[updatedBot.Id] = updatedBot
 		}
