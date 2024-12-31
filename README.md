@@ -20,40 +20,33 @@ You need [golang](https://go.dev/) 1.21.4 and [lua 5.3](https://www.lua.org/vers
 
 You need to build the first time you clone the repository and everytime you pull some changes.
 
-To build you can simply run `make build`.
+To build you can simply run `make build` (or `make full-build` to recompile C files).
 
-Or you can manually run the same commands individually:
-
-```shell
-cd player
-go install ../rgcore
-go build -a -o ../player.exe player.go main.go
-cd ..
-cd referee
-go install ../rgcore
-go build -a -o ../rg.exe -a referee.go main.go
-cd ..
-```
+Or you can manually run the same commands individually
 
 ### Run
 
 Once the scripts are built, you can run matches locally.
 
-First you need to run an instance of player for each of the two robots. In two different tabs run respectively:
+First you need to run an instance of player for each of the two robots, and one instance of referee. In three different tabs run respectively:
 ```shell
 # Lauch blue player
 ./player.exe -blue
 ```
-and:
 ```shell
 # Launch red player
 ./player.exe
 ```
-To run locally a match between PATH/TO/LUA/BOT1 and PATH/TO/LUA/BOT2 you can then open a new terminal and use the following command: `./referee.exe PATH/TO/LUA/BOT1 PATH/TO/LUA/BOT2`.
+```shell
+# Launch referee
+./referee.exe
+```
+
+To run locally a match between PATH/TO/LUA/BOT1 and PATH/TO/LUA/BOT2 you can then open a new terminal and use the following command: `./matchmaker.exe PATH/TO/LUA/BOT1 PATH/TO/LUA/BOT2`.
 
 exemple
 ```shell
-./referee.exe bots/random.lua bots/random.lua
+./matchmaker.exe bots/random.lua bots/random.lua
 ```
 
 

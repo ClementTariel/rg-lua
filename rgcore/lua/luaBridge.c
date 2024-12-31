@@ -103,7 +103,6 @@ int LoadStringBridge(void *pl, const char *s)
   return luaL_loadstring((lua_State *)pl, s);
 }
 
-// TODO: handle memory limitation
 int PcallBridge(void *pl, int nargs, int nresults, int msgh)
 {
   return lua_pcall((lua_State *)pl, nargs, nresults, msgh);

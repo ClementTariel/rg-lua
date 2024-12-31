@@ -1,9 +1,9 @@
 #include <unistd.h>
 #include <math.h>
-#include "debug/debug.h"
+#include "rgdebug/debug.h"
 #include "rg.h"
-#include "luaBridge.c"
-#include "grid.c"
+#include "lua/luaBridge.c"
+#include "grid/grid.c"
 
 int get_action(void *pl, void *paction, int bot_id)
 {

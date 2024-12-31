@@ -1,8 +1,9 @@
 {
     "files.associations": {
-        "rgcore/debug/debug.h": "c",
-        "rgcore/debug/string_array.h": "c",
-        "rgcore/debug/luaBridge.h": "c",
-        "rgcore/debug/rg.h": "c",
+        "rgcore/rgdebug/debug.h": "c",
+        "rgcore/rgdebug/string_array.h": "c",
+        "rgcore/lua/luaBridge.h": "c",
+        "rgcore/rg.h": "c",
+        "debug.h": "c"
     }
 }
