@@ -131,7 +131,6 @@ func (s *RefereeService) playTurn(playerId int, turn int, allBots []rgcore.Bot, 
 	return actions, warningCount
 }
 
-// TODO: put in ~grid service ?
 func (s *RefereeService) generateSpawnLocations() ([]rgcore.Location, error) {
 	var err error
 	selectedSpawnLocations := []rgcore.Location{}
@@ -158,21 +157,20 @@ func (s *RefereeService) generateSpawnLocations() ([]rgcore.Location, error) {
 	return selectedSpawnLocations, err
 }
 
-// TODO: put in ~grid service ?
 func (s *RefereeService) claimLocation(loc rgcore.Location, bot rgcore.Bot, claimedMoves map[rgcore.Location][]rgcore.Bot) {
 	botLoc := rgcore.Location{X: bot.X, Y: bot.Y}
 	otherBots, ok := claimedMoves[loc]
 	if !ok {
 		otherBots = []rgcore.Bot{}
 	}
-	// Check if the bot has already claimed this location
+	// Check if the bot has already claimed this location (base case)
 	for _, otherBot := range otherBots {
 		if otherBot.Id == bot.Id {
 			return
 		}
 	}
-	claimedMoves[loc] = append(otherBots, bot)
 	conflict := len(otherBots) >= 1
+	claimedMoves[loc] = append(otherBots, bot)
 	if !conflict {
 		// Make sure that there aren't 2 bots swapping their places
 		potentialSwapBots, botLocIsClaimed := claimedMoves[botLoc]
@@ -182,9 +180,9 @@ func (s *RefereeService) claimLocation(loc rgcore.Location, bot rgcore.Bot, clai
 		for _, potentialSwapBot := range potentialSwapBots {
 			potentialSwapBotLoc := rgcore.Location{X: potentialSwapBot.X, Y: potentialSwapBot.Y}
 			if bot.Id != potentialSwapBot.Id && potentialSwapBotLoc == loc {
-				// - bot wants to move to potentialSwapBotLoc
+				// - bot wants to move from botLoc to potentialSwapBotLoc
 				// - potentialSwapBot != bot
-				// - potentialSwapBot wants to move to loc
+				// - potentialSwapBot wants to move from potentialSwapBotLoc to botLoc
 				// => potentialSwapBot and bot are trying to swap places
 				conflict = true
 				break
@@ -194,29 +192,15 @@ func (s *RefereeService) claimLocation(loc rgcore.Location, bot rgcore.Bot, clai
 			return
 		}
 	}
-	if len(claimedMoves[loc]) == 2 {
-		// New conflict with another bot
-		// (otherwise the conflict has already been propagated)
-		otherBot := claimedMoves[loc][0]
+	botsInConflict := claimedMoves[loc]
+	// Deep copy to avoid unexpected behaviours
+	botsInConflict = append([]rgcore.Bot{}, botsInConflict...)
+	for _, otherBot := range botsInConflict {
+		// Bots involved in the conflict cannot move
+		// => they stay in place and claim their current location
 		otherBotLoc := rgcore.Location{X: otherBot.X, Y: otherBot.Y}
 		s.claimLocation(otherBotLoc, otherBot, claimedMoves)
 	}
-	otherBots, ok = claimedMoves[botLoc]
-	if !ok || len(otherBots) == 0 {
-		// No conflict (yet) for the claim of botLoc
-		claimedMoves[botLoc] = []rgcore.Bot{bot}
-		return
-	}
-	if len(otherBots) > 1 {
-		claimedMoves[botLoc] = append(otherBots, bot)
-		// Conflicts already detected for the claim of botLoc
-		return
-	}
-	// New conflict with another bot
-	otherBot := otherBots[0]
-	otherBotLoc := rgcore.Location{X: otherBot.X, Y: otherBot.Y}
-	claimedMoves[botLoc] = append(otherBots, bot)
-	s.claimLocation(otherBotLoc, otherBot, claimedMoves)
 }
 
 func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([]map[int]rgcore.BotState, error) {
@@ -316,23 +300,44 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 				updatedBots[updatedBot.Id] = updatedBot
 			}
 		}
-		// Collision damages
+		// Collision damage
+		collisions := map[int][]int{}
+		// Register all collisions
 		for _, bots := range claimedMoves {
 			if len(bots) == 1 {
 				continue
 			}
 			for _, bot := range bots {
-				updatedBot := updatedBots[bot.Id]
-				if game[len(game)-1][updatedBot.Id].Action.ActionType == rgcore.GUARD {
-					continue
+				botCollisions, ok := collisions[bot.Id]
+				if !ok {
+					botCollisions = []int{}
 				}
 				for _, otherBot := range bots {
-					if bot.PlayerId != otherBot.PlayerId {
-						updatedBot.Hp -= rgcore.COLLISION_DAMAGE
+					if otherBot.PlayerId != bot.PlayerId {
+						// otherBot deals damage to bot
+						collisionAlreadyRegistered := false
+						for _, colliderId := range botCollisions {
+							if colliderId == otherBot.Id {
+								collisionAlreadyRegistered = true
+								break
+							}
+						}
+						if !collisionAlreadyRegistered {
+							botCollisions = append(botCollisions, otherBot.Id)
+						}
 					}
 				}
-				updatedBots[updatedBot.Id] = updatedBot
+				collisions[bot.Id] = botCollisions
 			}
+		}
+		// Deal collision damage
+		for botId, collisions := range collisions {
+			updatedBot := updatedBots[botId]
+			if game[len(game)-1][updatedBot.Id].Action.ActionType == rgcore.GUARD {
+				continue
+			}
+			updatedBot.Hp -= rgcore.COLLISION_DAMAGE * len(collisions)
+			updatedBots[updatedBot.Id] = updatedBot
 		}
 		// Attack & Suicide damages
 		damages := map[rgcore.Location]int{}
