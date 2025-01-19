@@ -95,6 +95,10 @@ end
 
 ### Available interfaces
 
+Some constants are defined for the possible actions: `MOVE`, `ATTACK`, `GUARD`, `SUICIDE`.
+
+Some constants are defined for the possible locations types: `NORMAL`, `SPAWN`, `OBSTACLE`.
+
 an object `rg` is accessible by all robots, with the following functions and properties :
 - `Loc(x, y)` : A function that returns a Location `{ x=x, y=y }` that can be directly compared to another Location. For example `rg.Loc(9, 9) == rg.Loc(9, 9)` and `rg.Loc(9, 9) == { x=9, y=9 }` will both return `true` when `{ x=9, y=9 } == { x=9, y=9 }` will return `false`.
 - `wdist(loc1, loc2)` : A function that returns the walking distance (manhattan distance) between Locations `loc1`  and `loc2`.
