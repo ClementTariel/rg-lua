@@ -40,18 +40,17 @@ func PopState(pl unsafe.Pointer, n int) {
 func lineErrorMessage(pl unsafe.Pointer, script string, errorName string, fileName string) error {
 	msg := ToString(pl, -1)
 	parts := strings.Split(msg, ":")
-	parts = append(parts, "-1", "CustomError")
+	parts = append(parts, "", "")
 	PopState(pl, 1)
 	currentLine, err := strconv.ParseInt(parts[1], 10, 64)
 	lineContent := "Line not found"
-	if err != nil {
-		currentLine = 0
-	} else {
-		// added "\n" as a quick fix to allow lazy error handling,
-		// causing a shift of the line count
-		currentLine -= 1
-		lineContent = strings.Split(script, "\n")[currentLine-1]
+	if err != nil || currentLine < 2 {
+		return fmt.Errorf(fmt.Sprintf("\n%s\n", errorName))
 	}
+	// added "\n" as a quick fix to allow lazy error handling,
+	// causing a shift of the line count
+	currentLine -= 1
+	lineContent = strings.Split(script+"\n", "\n")[currentLine-1]
 	return errors.New("\n" +
 		fmt.Sprintf("%s\n", errorName) +
 		fmt.Sprintf("%s: At line %d:\n", fileName, currentLine) +
