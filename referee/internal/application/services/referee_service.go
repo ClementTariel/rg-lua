@@ -117,7 +117,7 @@ func (s *RefereeService) initPlayer(isBlue bool, name string, script string) (in
 }
 
 func (s *RefereeService) playTurn(playerId int, turn int, allBots []rgcore.Bot, previousWarningCount int) (map[int]rgcore.Action, int) {
-	actions, warningCount, err := s.playerMS.PlayTurn(playerId == 1, turn, rgcore.Allies(playerId, allBots), rgcore.Enemies(playerId, allBots), previousWarningCount)
+	actions, warningCount, err := s.playerMS.PlayTurn(playerId == rgcore.BLUE_ID, turn, rgcore.Allies(playerId, allBots), rgcore.Enemies(playerId, allBots), previousWarningCount)
 	if err != nil {
 		warningCount = rgcore.WARNING_TOLERANCE + 1
 		for _, bot := range rgcore.Allies(playerId, allBots) {
@@ -224,7 +224,7 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 					Y:        loc.Y,
 					Hp:       rgcore.MAX_HP,
 					Id:       lastId,
-					PlayerId: 1,
+					PlayerId: rgcore.BLUE_ID,
 				})
 				lastId += 1
 				allBots = append(allBots, rgcore.Bot{
@@ -232,7 +232,7 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 					Y:        rgcore.GRID_SIZE - 1 - loc.Y,
 					Hp:       rgcore.MAX_HP,
 					Id:       lastId,
-					PlayerId: 2,
+					PlayerId: rgcore.RED_ID,
 				})
 			}
 		}
@@ -243,11 +243,11 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 		wg := sync.WaitGroup{}
 		wg.Add(2)
 		go func() {
-			blueActions, blueWarningCount = s.playTurn(1, turn, allBots, blueWarningCount)
+			blueActions, blueWarningCount = s.playTurn(rgcore.BLUE_ID, turn, allBots, blueWarningCount)
 			wg.Done()
 		}()
 		go func() {
-			redActions, redWarningCount = s.playTurn(2, turn, allBots, redWarningCount)
+			redActions, redWarningCount = s.playTurn(rgcore.RED_ID, turn, allBots, redWarningCount)
 			wg.Done()
 		}()
 		wg.Wait()
@@ -256,7 +256,7 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 		currentGameState := map[int]rgcore.BotState{}
 		for _, bot := range allBots {
 			botState := rgcore.BotState{Bot: bot}
-			if bot.PlayerId == 1 {
+			if bot.PlayerId == rgcore.BLUE_ID {
 				botState.Action = blueActions[bot.Id]
 			} else {
 				botState.Action = redActions[bot.Id]
@@ -296,8 +296,7 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 				continue
 			}
 			for _, bot := range bots {
-				updatedBot := bot
-				updatedBots[updatedBot.Id] = updatedBot
+				updatedBots[bot.Id] = bot
 			}
 		}
 		// Collision damage
@@ -340,15 +339,17 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 			updatedBots[updatedBot.Id] = updatedBot
 		}
 		// Attack & Suicide damage
-		damage := map[rgcore.Location]int{}
+		damage := map[int]map[rgcore.Location]int{}
+		damage[rgcore.BLUE_ID] = map[rgcore.Location]int{}
+		damage[rgcore.RED_ID] = map[rgcore.Location]int{}
 		for _, botState := range game[len(game)-1] {
 			if botState.Action.ActionType == rgcore.ATTACK {
 				loc := rgcore.Location{X: botState.Action.X, Y: botState.Action.Y}
-				currentDamage, ok := damage[loc]
+				currentDamage, ok := damage[botState.Bot.PlayerId][loc]
 				if !ok {
 					currentDamage = 0
 				}
-				damage[loc] = currentDamage +
+				damage[botState.Bot.PlayerId][loc] = currentDamage +
 					rgcore.ATTACK_DAMAGE_MIN +
 					rand.Intn(rgcore.ATTACK_DAMAGE_MAX+1-rgcore.ATTACK_DAMAGE_MIN)
 			} else if botState.Action.ActionType == rgcore.SUICIDE {
@@ -359,18 +360,24 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 					x := botState.Bot.X + (i%2)*(i-2)
 					y := botState.Bot.Y + ((i+1)%2)*(i-1)
 					loc := rgcore.Location{X: x, Y: y}
-					currentDamage, ok := damage[loc]
+					currentDamage, ok := damage[botState.Bot.PlayerId][loc]
 					if !ok {
 						currentDamage = 0
 					}
-					damage[loc] = currentDamage + rgcore.SUICIDE_DAMAGE
+					damage[botState.Bot.PlayerId][loc] = currentDamage + rgcore.SUICIDE_DAMAGE
 				}
 
 			}
 		}
 		for _, botState := range game[len(game)-1] {
 			loc := rgcore.Location{X: botState.Bot.X, Y: botState.Bot.Y}
-			totalDamage, ok := damage[loc]
+			totalDamage := 0
+			ok := false
+			if botState.Bot.PlayerId == rgcore.BLUE_ID {
+				totalDamage, ok = damage[rgcore.RED_ID][loc]
+			} else {
+				totalDamage, ok = damage[rgcore.BLUE_ID][loc]
+			}
 			if !ok {
 				continue
 			}

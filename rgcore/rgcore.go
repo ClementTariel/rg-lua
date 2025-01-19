@@ -65,6 +65,9 @@ const (
 	ARENA_RADIUS = float64(C.ARENA_RADIUS)
 	GRID_SIZE    = int(C.GRID_SIZE)
 
+	BLUE_ID = 1
+	RED_ID  = 2
+
 	SPAWN_DELAY       = 10
 	SPAWN_COUNT       = 5
 	MAX_HP            = 50
