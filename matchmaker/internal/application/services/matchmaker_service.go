@@ -32,7 +32,7 @@ func (s *MatchmakerService) printGrid(currentGameState map[int]rgcore.BotState) 
 	for _, botState := range currentGameState {
 		tile := "O"
 		blueCount += 1
-		if botState.Bot.PlayerId == rgcore.BLUE_ID {
+		if botState.Bot.PlayerId == rgcore.RED_ID {
 			tile = "X"
 			blueCount -= 1
 			redCount += 1
