@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io"
 	"net/http"
 
 	"github.com/ClementTariel/rg-lua/referee/internal/domain/external"
@@ -16,36 +15,6 @@ type MatchmakerMS struct {
 
 func NewMatchmakerMS() external.MatchmakerMS {
 	return MatchmakerMS{}
-}
-
-func (MatchmakerMS) PlayTurn(isBlue bool, turn int, allies []rgcore.Bot, enemies []rgcore.Bot, warningCount int) (map[int]rgcore.Action, int, error) {
-	var port int
-	if isBlue {
-		port = rgcore.PORT_PLAYER_BLUE
-	} else {
-		port = rgcore.PORT_PLAYER_RED
-	}
-	postBody, _ := json.Marshal(external.PlayerPlayTurnRequest{
-		Turn:         turn,
-		Allies:       allies,
-		Enemies:      enemies,
-		WarningCount: warningCount,
-	})
-	var playResponse external.PlayerPlayTurnResponse
-	resp, err := http.Post(fmt.Sprintf("http://localhost:%d/play", port), "application/json", bytes.NewBuffer(postBody))
-	if err != nil {
-		return map[int]rgcore.Action{}, rgcore.WARNING_TOLERANCE + 1, err
-	}
-	defer resp.Body.Close()
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return map[int]rgcore.Action{}, rgcore.WARNING_TOLERANCE + 1, err
-	}
-	err = json.Unmarshal(body, &playResponse)
-	if err != nil {
-		return map[int]rgcore.Action{}, rgcore.WARNING_TOLERANCE + 1, err
-	}
-	return playResponse.Actions, playResponse.WarningCount, nil
 }
 
 func (MatchmakerMS) SaveMatch(matchId string, match []map[int]rgcore.BotState) error {
