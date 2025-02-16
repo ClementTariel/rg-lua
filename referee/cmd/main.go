@@ -1,7 +1,9 @@
 package main
 
 import (
+	"database/sql"
 	"flag"
+	"fmt"
 	"strconv"
 
 	"github.com/ClementTariel/rg-lua/referee/internal/application/controllers"
@@ -36,7 +38,18 @@ func main() {
 
 	e := echo.New()
 
-	botRepo := db.NewBotRepository()
+	// TODO: WIP connection to db
+	// TODO: load user and password from conf or env
+	user := "referee_user"
+	password := "referee_temporary_password"
+	connStr := fmt.Sprintf("user=%s password=%s dbname=rglua sslmode=disable", user, password)
+	postgresDb, err := sql.Open("postgres", connStr)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return
+	}
+
+	botRepo := db.NewBotRepository(postgresDb)
 	refereeService := services.NewRefereeService(botRepo)
 	controllers.NewRefereeController(e, refereeService)
 

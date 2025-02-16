@@ -1,0 +1,20 @@
+CREATE DATABASE rglua;
+CREATE USER referee_user WITH PASSWORD :v1;
+CREATE USER matchmaker_user WITH PASSWORD :v2;
+CREATE USER rglua_user WITH PASSWORD :v3;
+
+\c rglua;
+
+CREATE OR REPLACE FUNCTION load_bot(path TEXT) RETURNS TEXT AS $$
+  SELECT CAST(pg_read_file($1) AS TEXT);
+$$ LANGUAGE sql SECURITY DEFINER;
+ALTER FUNCTION load_bot(TEXT) OWNER TO postgres;
+
+CREATE TABLE users (id UUID PRIMARY KEY, name VARCHAR (20));
+CREATE TABLE bots (id UUID PRIMARY KEY, name VARCHAR (50), script TEXT, userId UUID REFERENCES users (id) , userName VARCHAR (20));
+-- TODO: WIP create table matchs
+
+GRANT SELECT ON TABLE bots TO referee_user;
+GRANT SELECT ON TABLE bots TO matchmaker_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE bots TO rglua_user;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE users TO rglua_user;

@@ -1,33 +1,38 @@
 package db
 
 import (
+	"database/sql"
 	"fmt"
-	"os"
+
+	"github.com/google/uuid"
+	_ "github.com/lib/pq"
 
 	"github.com/ClementTariel/rg-lua/referee/internal/domain/entities"
 	"github.com/ClementTariel/rg-lua/referee/internal/domain/repositories"
 )
 
 type BotRepository struct {
-	// TODO: WIP add info necessary to use db
+	db *sql.DB
 }
 
-func NewBotRepository() repositories.BotRepository {
-	// TODO: WIP add info necessary to use db
-	return &BotRepository{}
+func NewBotRepository(db *sql.DB) repositories.BotRepository {
+	return &BotRepository{
+		db: db,
+	}
 }
 
-func (br *BotRepository) GetByName(name string) (entities.Bot, error) {
-	// TODO: WIP retreive from db
-	b, err := os.ReadFile(name)
+func (br *BotRepository) GetById(id uuid.UUID) (entities.Bot, error) {
+	stmt, err := br.db.Prepare("SELECT name, script FROM bots WHERE id= $1")
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		return entities.Bot{}, err
 	}
-	script := string(b)
-	return entities.Bot{
-		Name:     name,
-		Script:   script,
-		UserName: "examples",
-	}, nil
+	var bot entities.Bot
+	err = stmt.QueryRow(id).Scan(&bot.Name, &bot.Script)
+	if err != nil {
+		fmt.Printf("%v\n", err)
+		return entities.Bot{}, err
+	}
+	return bot, nil
+
 }

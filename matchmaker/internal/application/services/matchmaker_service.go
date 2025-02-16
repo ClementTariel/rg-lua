@@ -4,15 +4,25 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/google/uuid"
+
+	"github.com/ClementTariel/rg-lua/matchmaker/internal/domain/external"
+	"github.com/ClementTariel/rg-lua/matchmaker/internal/domain/repositories"
+	"github.com/ClementTariel/rg-lua/matchmaker/internal/infrastructure/rest"
 	"github.com/ClementTariel/rg-lua/rgcore"
 	"github.com/ClementTariel/rg-lua/rgcore/rgdebug"
 )
 
 type MatchmakerService struct {
+	botRepo   repositories.BotRepository
+	refereeMS external.RefereeMS
 }
 
-func NewMatchmakerService() MatchmakerService {
-	return MatchmakerService{}
+func NewMatchmakerService(botRepo repositories.BotRepository) MatchmakerService {
+	return MatchmakerService{
+		botRepo:   botRepo,
+		refereeMS: rest.NewRefereeMS(),
+	}
 }
 
 func (s *MatchmakerService) printGrid(currentGameState map[int]rgcore.BotState) {
@@ -48,7 +58,7 @@ func (s *MatchmakerService) printGrid(currentGameState map[int]rgcore.BotState) 
 	fmt.Printf("\033[47m%s\033[0m\n", gameStateAsStr)
 }
 
-func (s *MatchmakerService) SaveMatch(matchId string, match []map[int]rgcore.BotState) bool {
+func (s *MatchmakerService) SaveMatch(matchId uuid.UUID, match []map[int]rgcore.BotState) bool {
 	rgdebug.VPrintf("save %v\n", matchId)
 	for i, state := range match {
 		fmt.Printf("turn %d\n", i+1)
@@ -68,8 +78,18 @@ func (s *MatchmakerService) SaveMatch(matchId string, match []map[int]rgcore.Bot
 	return false
 }
 
-func (s *MatchmakerService) CancelMatch(matchId string, err error) bool {
+func (s *MatchmakerService) CancelMatch(matchId uuid.UUID, err error) bool {
 	fmt.Printf("cancel %v because of %v\n", matchId, err)
 	// TODO: cancel match
 	return false
+}
+
+// TODO: WIP TEMPORARY
+func (s *MatchmakerService) StartMatch(matchId uuid.UUID, blueId uuid.UUID, redId uuid.UUID) error {
+	return s.refereeMS.StartMatch(matchId, blueId, redId)
+}
+
+// TODO: WIP TEMPORARY
+func (s *MatchmakerService) KillMatch() error {
+	return s.refereeMS.KillMatch()
 }

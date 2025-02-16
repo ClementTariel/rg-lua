@@ -1,7 +1,9 @@
 package interfaces
 
+import "github.com/google/uuid"
+
 type StartRequest struct {
-	MatchId string `json:"matchId"`
-	Blue    string `json:"blue"`
-	Red     string `json:"red"`
+	MatchId uuid.UUID `json:"matchId"`
+	BlueId  uuid.UUID `json:"blueId"`
+	RedId   uuid.UUID `json:"redId"`
 }

@@ -48,7 +48,7 @@ func (rc *RefereeController) StartMatch(c echo.Context) error {
 		fmt.Println("Could not bind Start Match request data")
 		return c.String(http.StatusBadRequest, "bad request")
 	}
-	startStatus := rc.refereeService.StartMatch(startRequest.MatchId, startRequest.Blue, startRequest.Red)
+	startStatus := rc.refereeService.StartMatch(startRequest.MatchId, startRequest.BlueId, startRequest.RedId)
 	startResponse := &interfaces.StartResponse{
 		Started: startStatus,
 	}

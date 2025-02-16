@@ -12,7 +12,10 @@ The rebirth of robotgame but in lua instead of python.
 
 ## Requirement 
 
-You need [golang](https://go.dev/) 1.21.4 and [lua 5.3](https://www.lua.org/versions.html#5.3).
+You need:
+- [golang](https://go.dev/) 1.21.4 
+- [lua 5.3](https://www.lua.org/versions.html#5.3)
+- [postgres](https://www.postgresql.org/) 14
 
 ## Getting started
 
@@ -20,9 +23,20 @@ You need [golang](https://go.dev/) 1.21.4 and [lua 5.3](https://www.lua.org/vers
 
 You need to build the first time you clone the repository and everytime you pull some changes.
 
-To build you can simply run `make build` (or `make full-build` to recompile C files).
+To build you can simply run `make build` (or `make full-build` if you want to recompile C files).
 
 Or you can manually run the same commands individually
+
+#### First build
+
+for the first build you need to run :
+
+`make download` to download all the dependencies
+
+`make full-build` to compile C files.
+
+You also need to run `make reset-db` **(It will perform operations that require elevated privilege :`sudo -u postgres psql`)** to reset and initialize the db. *If a database named rglua had already been created it will erase it.*
+
 
 ### Run
 
@@ -42,11 +56,11 @@ First you need to run an instance of player for each of the two robots, and one 
 ./referee.exe
 ```
 
-To run locally a match between PATH/TO/LUA/BOT1 and PATH/TO/LUA/BOT2 you can then open a new terminal and use the following command: `./matchmaker.exe PATH/TO/LUA/BOT1 PATH/TO/LUA/BOT2`.
+To run locally a match between PATH/TO/LUA/BOT1 and PATH/TO/LUA/BOT2 you can then open a new terminal and use the following command: `./matchmaker.exe BOT_NAME1 BOT_NAME2`. *The bot name must be in the "bots" table of the "rglua" database. when `make reset-db` is run, all bots under /bots are added to the database, for example bots/random.lua creates an entry with the name 'random'. You can either add you bot under /bots before reseting the db, or add it to the table 'bots' manually later.*
 
 exemple
 ```shell
-./matchmaker.exe bots/random.lua bots/random.lua
+./matchmaker.exe random random
 ```
 
 

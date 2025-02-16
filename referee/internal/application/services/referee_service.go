@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"sync"
 
+	"github.com/google/uuid"
+
 	"github.com/ClementTariel/rg-lua/referee/internal/domain/external"
 	"github.com/ClementTariel/rg-lua/referee/internal/domain/repositories"
 	"github.com/ClementTariel/rg-lua/referee/internal/infrastructure/rest"
@@ -13,7 +15,7 @@ import (
 )
 
 type RefereeService struct {
-	matchId      string
+	matchId      uuid.UUID
 	botRepo      repositories.BotRepository
 	playerMS     external.PlayerMS
 	matchmakerMS external.MatchmakerMS
@@ -21,18 +23,18 @@ type RefereeService struct {
 
 func NewRefereeService(botRepo repositories.BotRepository) RefereeService {
 	return RefereeService{
-		matchId:      "",
+		matchId:      uuid.New(),
 		botRepo:      botRepo,
 		playerMS:     rest.NewPlayerMS(),
 		matchmakerMS: rest.NewMatchmakerMS(),
 	}
 }
 
-func (s *RefereeService) StopMatch() (string, error) {
+func (s *RefereeService) StopMatch() (uuid.UUID, error) {
 	rgdebug.VPrintln("Stop match")
-	matchId := ""
+	matchId := uuid.Nil
 	var err error
-	if s.matchId != "" {
+	if s.matchId != uuid.Nil {
 		matchId = s.matchId
 		blue := true
 		_, err1 := s.playerMS.Kill(blue)
@@ -45,19 +47,19 @@ func (s *RefereeService) StopMatch() (string, error) {
 			err = err2
 			fmt.Printf("An Error Occured : %v\n", err)
 		}
-		s.matchId = ""
+		s.matchId = uuid.Nil
 	}
 	rgdebug.VPrintf("match stopped : %v\n", matchId)
 	return matchId, err
 }
 
-func (s *RefereeService) StartMatch(matchId string, blueName string, redName string) bool {
-	blueBot, err := s.botRepo.GetByName(blueName)
+func (s *RefereeService) StartMatch(matchId uuid.UUID, blueId uuid.UUID, redId uuid.UUID) bool {
+	blueBot, err := s.botRepo.GetById(blueId)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		return false
 	}
-	redBot, err := s.botRepo.GetByName(redName)
+	redBot, err := s.botRepo.GetById(redId)
 	if err != nil {
 		fmt.Printf("%v\n", err)
 		return false

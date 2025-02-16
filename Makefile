@@ -18,6 +18,18 @@ full-build:
 
 download:
 	@echo ${YELLOW}[DOWNLOAD]${RESET}
-	@echo ${BLUE}[INFO]${RESET} Downloading golang packages for player && cd player ; go mod download
-	@echo ${BLUE}[INFO]${RESET} Downloading golang packages for referee && cd referee ; go mod download
-	@echo ${BLUE}[INFO]${RESET} Downloading golang packages for matchmaker && cd matchmaker ; go mod download
+	@echo ${BLUE}[INFO]${RESET} Downloading golang packages for rgcore && cd rgcore ; go mod download ; go mod tidy
+	@echo ${BLUE}[INFO]${RESET} Downloading golang packages for player && cd player ; go mod download ; go mod tidy
+	@echo ${BLUE}[INFO]${RESET} Downloading golang packages for referee && cd referee ; go mod download ; go mod tidy
+	@echo ${BLUE}[INFO]${RESET} Downloading golang packages for matchmaker && cd matchmaker ; go mod download ; go mod tidy
+
+reset-db:
+	@echo ${YELLOW}[RESET DB]${RESET}
+	@echo ${BLUE}[INFO]${RESET} delete previous database && cat ./deployments/delete_db.sql | sudo -u postgres psql 
+	# TODO: load user and password from conf or env
+	@echo ${BLUE}[INFO]${RESET} create database, tables and users && cat ./deployments/init_db.sql | sudo -u postgres psql \
+    -v v1="'referee_temporary_password'" \
+    -v v2="'matchmaker_temporary_password'" \
+    -v v3="'rglua_temporary_password'"
+	@echo ${BLUE}[INFO]${RESET} load default examples bots && ./deployments/load_examples.sh
+	
