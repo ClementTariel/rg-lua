@@ -11,7 +11,10 @@ import (
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/domain/external"
 )
 
-const REFEREE_PORT = 3333
+const (
+	REFEREE_HOST = "referee"
+	REFEREE_PORT = 3333
+)
 
 type RefereeMS struct {
 }
@@ -26,11 +29,11 @@ func (RefereeMS) StartMatch(matchId uuid.UUID, blueId uuid.UUID, redId uuid.UUID
 		RedId:   redId,
 		MatchId: uuid.New(),
 	})
-	_, err := http.Post(fmt.Sprintf("http://localhost:%d/start", REFEREE_PORT), "application/json", bytes.NewBuffer(postBody))
+	_, err := http.Post(fmt.Sprintf("http://%s:%d/start", REFEREE_HOST, REFEREE_PORT), "application/json", bytes.NewBuffer(postBody))
 	return err
 }
 
 func (RefereeMS) KillMatch() error {
-	_, err := http.Post(fmt.Sprintf("http://localhost:%d/start", REFEREE_PORT), "", nil)
+	_, err := http.Post(fmt.Sprintf("http://%s:%d/stop", REFEREE_HOST, REFEREE_PORT), "", nil)
 	return err
 }

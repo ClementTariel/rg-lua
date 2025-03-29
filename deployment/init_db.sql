@@ -1,7 +1,7 @@
-CREATE DATABASE rglua;
 CREATE USER referee_user WITH PASSWORD :v1;
 CREATE USER matchmaker_user WITH PASSWORD :v2;
 CREATE USER rglua_user WITH PASSWORD :v3;
+CREATE DATABASE rglua;
 
 \c rglua;
 

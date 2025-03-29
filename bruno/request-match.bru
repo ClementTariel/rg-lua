@@ -1,0 +1,24 @@
+meta {
+  name: request-match
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{baseUrl}}:4444/request-match
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "blueName": "{{blueName}}",
+    "redName": "{{redName}}"
+  }
+}
+
+vars:pre-request {
+  baseUrl: http://localhost
+  blueName: random
+  redName: random
+}

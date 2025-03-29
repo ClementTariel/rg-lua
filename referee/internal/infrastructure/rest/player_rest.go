@@ -14,18 +14,29 @@ import (
 type PlayerMS struct {
 }
 
+const (
+	BLUE_PLAYER_HOST = "blue_player"
+	RED_PLAYER_HOST  = "red_player"
+
+	BLUE_PLAYER_PORT = 1111
+	RED_PLAYER_PORT  = 2222
+)
+
 func NewPlayerMS() external.PlayerMS {
 	return PlayerMS{}
 }
 
 func (PlayerMS) Kill(isBlue bool) (bool, error) {
 	var port int
+	var host string
 	if isBlue {
-		port = rgcore.PORT_PLAYER_BLUE
+		port = BLUE_PLAYER_PORT
+		host = BLUE_PLAYER_HOST
 	} else {
-		port = rgcore.PORT_PLAYER_RED
+		port = RED_PLAYER_PORT
+		host = RED_PLAYER_HOST
 	}
-	resp, err := http.Post(fmt.Sprintf("http://localhost:%d/kill", port), "", nil)
+	resp, err := http.Post(fmt.Sprintf("http://%s:%d/kill", host, port), "", nil)
 	if err != nil {
 		return false, err
 	}
@@ -44,16 +55,19 @@ func (PlayerMS) Kill(isBlue bool) (bool, error) {
 
 func (PlayerMS) Init(isBlue bool, name string, script string) (int, error) {
 	var port int
+	var host string
 	if isBlue {
-		port = rgcore.PORT_PLAYER_BLUE
+		port = BLUE_PLAYER_PORT
+		host = BLUE_PLAYER_HOST
 	} else {
-		port = rgcore.PORT_PLAYER_RED
+		port = RED_PLAYER_PORT
+		host = RED_PLAYER_HOST
 	}
 	postBody, _ := json.Marshal(external.PlayerInitRequest{
 		Name:   name,
 		Script: script,
 	})
-	resp, err := http.Post(fmt.Sprintf("http://localhost:%d/init", port), "application/json", bytes.NewBuffer(postBody))
+	resp, err := http.Post(fmt.Sprintf("http://%s:%d/init", host, port), "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
 		return rgcore.WARNING_TOLERANCE + 1, err
 	}
@@ -72,10 +86,13 @@ func (PlayerMS) Init(isBlue bool, name string, script string) (int, error) {
 
 func (PlayerMS) PlayTurn(isBlue bool, turn int, allies []rgcore.Bot, enemies []rgcore.Bot, warningCount int) (map[int]rgcore.Action, int, error) {
 	var port int
+	var host string
 	if isBlue {
-		port = rgcore.PORT_PLAYER_BLUE
+		port = BLUE_PLAYER_PORT
+		host = BLUE_PLAYER_HOST
 	} else {
-		port = rgcore.PORT_PLAYER_RED
+		port = RED_PLAYER_PORT
+		host = RED_PLAYER_HOST
 	}
 	postBody, _ := json.Marshal(external.PlayerPlayTurnRequest{
 		Turn:         turn,
@@ -84,7 +101,7 @@ func (PlayerMS) PlayTurn(isBlue bool, turn int, allies []rgcore.Bot, enemies []r
 		WarningCount: warningCount,
 	})
 	var playResponse external.PlayerPlayTurnResponse
-	resp, err := http.Post(fmt.Sprintf("http://localhost:%d/play", port), "application/json", bytes.NewBuffer(postBody))
+	resp, err := http.Post(fmt.Sprintf("http://%s:%d/play", host, port), "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
 		return map[int]rgcore.Action{}, rgcore.WARNING_TOLERANCE + 1, err
 	}

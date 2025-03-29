@@ -3,9 +3,12 @@ package services
 import (
 	"fmt"
 	"strings"
+	"sync"
+	"time"
 
 	"github.com/google/uuid"
 
+	"github.com/ClementTariel/rg-lua/matchmaker/internal/domain/entities"
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/domain/external"
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/domain/repositories"
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/infrastructure/rest"
@@ -13,15 +16,40 @@ import (
 	"github.com/ClementTariel/rg-lua/rgcore/rgdebug"
 )
 
+const MATCH_TIMEOUT = 2 *
+	// Convert from nanoseconds to milliseconds
+	1000000 *
+	// Init time
+	((rgcore.BOT_ACTION_TIME_BUDGET *
+		// number of bots per wave
+		2 * rgcore.SPAWN_COUNT *
+		// number of waves
+		rgcore.MAX_TURN / rgcore.SPAWN_DELAY) +
+
+		// Action time
+		(rgcore.BOT_ACTION_TIME_BUDGET *
+			// duration of a wave
+			rgcore.SPAWN_DELAY *
+			// sum of the max number of bots per wave
+			((rgcore.MAX_TURN / rgcore.SPAWN_DELAY) *
+				((rgcore.MAX_TURN / rgcore.SPAWN_DELAY) + 1) / 2) *
+			2 * rgcore.SPAWN_COUNT))
+
 type MatchmakerService struct {
-	botRepo   repositories.BotRepository
-	refereeMS external.RefereeMS
+	botRepo       repositories.BotRepository
+	refereeMS     external.RefereeMS
+	matchQueue    entities.MatchQueue
+	isRunning     bool
+	debounceTimer *time.Timer
+	mu            sync.Mutex
 }
 
 func NewMatchmakerService(botRepo repositories.BotRepository) MatchmakerService {
 	return MatchmakerService{
-		botRepo:   botRepo,
-		refereeMS: rest.NewRefereeMS(),
+		botRepo:    botRepo,
+		refereeMS:  rest.NewRefereeMS(),
+		matchQueue: entities.NewMatchQueue(),
+		isRunning:  false,
 	}
 }
 
@@ -85,11 +113,54 @@ func (s *MatchmakerService) CancelMatch(matchId uuid.UUID, err error) bool {
 }
 
 // TODO: WIP TEMPORARY
-func (s *MatchmakerService) StartMatch(matchId uuid.UUID, blueId uuid.UUID, redId uuid.UUID) error {
-	return s.refereeMS.StartMatch(matchId, blueId, redId)
+func (s *MatchmakerService) KillMatch() error {
+	defer func(s *MatchmakerService) { s.isRunning = false }(s)
+	return s.refereeMS.KillMatch()
 }
 
-// TODO: WIP TEMPORARY
-func (s *MatchmakerService) KillMatch() error {
-	return s.refereeMS.KillMatch()
+func (s *MatchmakerService) AddMatchToQueue(blueName string, redName string) (bool, error) {
+	// TODO: better system to handle queue size and check on elements added
+	if s.matchQueue.IsFull() {
+		return false, nil
+	}
+	blueId, err := s.botRepo.GetIdFromName(blueName)
+	if err != nil {
+		return false, err
+	}
+	redId, err := s.botRepo.GetIdFromName(redName)
+	if err != nil {
+		return false, err
+	}
+	added := s.matchQueue.Push(entities.PendingMatch{BlueId: blueId, RedId: redId})
+	if !s.isRunning {
+		err = s.StartDebouncedMatch()
+	}
+	return added, err
+}
+
+func (s *MatchmakerService) StartMatch(pendingMatch entities.PendingMatch) error {
+	s.isRunning = true
+	fmt.Println("Match started, waiting for the result...")
+	return s.refereeMS.StartMatch(uuid.New(), pendingMatch.BlueId, pendingMatch.RedId)
+}
+
+func (s *MatchmakerService) StartDebouncedMatch() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.isRunning {
+		return nil
+	}
+	if s.debounceTimer != nil {
+		s.debounceTimer.Stop()
+	}
+	pendingMatch, err := s.matchQueue.Pop()
+	if err != nil {
+		return err
+	}
+	s.debounceTimer = time.AfterFunc(MATCH_TIMEOUT, func() {
+		s.KillMatch()
+		fmt.Println("Kill match because it took too long")
+		s.StartDebouncedMatch()
+	})
+	return s.StartMatch(pendingMatch)
 }

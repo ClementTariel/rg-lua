@@ -101,9 +101,11 @@ func (s *RefereeService) initMatch(blueName string, blueScript string, redName s
 	wg.Wait()
 	var err error
 	if blueErr != nil {
+		fmt.Printf("blue error: %v\n", blueErr)
 		err = blueErr
 	}
 	if redErr != nil {
+		fmt.Printf("blue error: %v\n", blueErr)
 		err = redErr
 	}
 	return blueWarningCount, redWarningCount, err

@@ -1,4 +1,0 @@
-DROP DATABASE IF EXISTS rglua WITH ( FORCE );
-DROP USER IF EXISTS referee_user;
-DROP USER IF EXISTS matchmaker_user;
-DROP USER IF EXISTS rglua_user;

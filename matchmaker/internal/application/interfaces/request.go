@@ -15,3 +15,8 @@ type CancelMatchRequest struct {
 	MatchId uuid.UUID `json:"matchId"`
 	Error   error     `json:"error"`
 }
+
+type AddPendingMatchRequest struct {
+	BlueName string `json:"blueName"`
+	RedName  string `json:"redName"`
+}

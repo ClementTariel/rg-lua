@@ -40,7 +40,7 @@ func (pc *PlayerController) InitPlayer(c echo.Context) error {
 	var initRequest interfaces.InitRequest
 	err := c.Bind(&initRequest)
 	if err != nil {
-		fmt.Println("Could not bind Init request data")
+		fmt.Printf("%v\n", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
 	rgdebug.VPrintf("name : %s\n", initRequest.Name)
@@ -59,8 +59,8 @@ func (pc *PlayerController) Play(c echo.Context) error {
 	var playRequest interfaces.PlayRequest
 	err := c.Bind(&playRequest)
 	if err != nil {
-		fmt.Println("Could not bind Play request data")
-		return c.String(http.StatusBadRequest, "bad request")
+		fmt.Printf("%v\n", err)
+		return c.String(http.StatusBadRequest, "Bad Request")
 	}
 	actions, warningCount := pc.playerService.PlayTurn(playRequest.Turn,
 		playRequest.Allies,

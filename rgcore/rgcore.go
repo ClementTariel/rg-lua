@@ -49,9 +49,6 @@ type (
 )
 
 const (
-	PORT_PLAYER_BLUE = 1111
-	PORT_PLAYER_RED  = 2222
-
 	MOVE    = ActionType(C.MOVE)
 	ATTACK  = ActionType(C.ATTACK)
 	GUARD   = ActionType(C.GUARD)

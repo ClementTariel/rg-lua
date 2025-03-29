@@ -6,6 +6,8 @@ The project is currently Work In Progress, **some security features aren't imple
 
 **It is not safe to run untrusted scripts that you don't understand.**
 
+**This project is not ready for production. Do not deploy it on a machine exposed to external connections**
+
 ## description
 
 The rebirth of robotgame but in lua instead of python.
@@ -13,56 +15,59 @@ The rebirth of robotgame but in lua instead of python.
 ## Requirement 
 
 You need:
-- [golang](https://go.dev/) 1.21.4 
-- [lua 5.3](https://www.lua.org/versions.html#5.3)
-- [postgres](https://www.postgresql.org/) 14
+- [docker](https://www.docker.com/) 
+- an API client such as [bruno](https://www.usebruno.com/) (a bruno collection is provided in this project under the flolder `bruno`)
 
-## Getting started
+## Quick start
 
 ### Build
 
 You need to build the first time you clone the repository and everytime you pull some changes.
 
-To build you can simply run `make build` (or `make full-build` if you want to recompile C files).
+To build you can simply run `make build`.
 
-Or you can manually run the same commands individually
-
-#### First build
-
-for the first build you need to run :
-
-`make download` to download all the dependencies
-
-`make full-build` to compile C files.
-
-You also need to run `make reset-db` **(It will perform operations that require elevated privilege :`sudo -u postgres psql`)** to reset and initialize the db. *If a database named rglua had already been created it will erase it.*
-
+To clear the database if you have messed it up and want to reset it run `make clear-db`
 
 ### Run
 
-Once the scripts are built, you can run matches locally.
+Once the images are built, you can run matches locally.
 
-First you need to run an instance of player for each of the two robots, and one instance of referee. In three different tabs run respectively:
-```shell
-# Lauch blue player
-./player.exe -blue
-```
-```shell
-# Launch red player
-./player.exe
-```
-```shell
-# Launch referee
-./referee.exe
-```
+First you need to run the images, open a terminal and run `make run`.
+The output of a match will appear in this terminal when it ends.
+You can stop the images at anytime by running `make stop` in another tab.
 
-To run locally a match between PATH/TO/LUA/BOT1 and PATH/TO/LUA/BOT2 you can then open a new terminal and use the following command: `./matchmaker.exe BOT_NAME1 BOT_NAME2`. *The bot name must be in the "bots" table of the "rglua" database. when `make reset-db` is run, all bots under /bots are added to the database, for example bots/random.lua creates an entry with the name 'random'. You can either add you bot under /bots before reseting the db, or add it to the table 'bots' manually later.*
+Then open your API Client.
 
-exemple
-```shell
-./matchmaker.exe random random
+- With an API Client other than Bruno
+
+Make a `POST` request to `localhost:4444/request-match`, the body should have the following structure:
+```json
+{
+  "blueName": "{{blueName}}",
+  "redName": "{{redName}}"
+}
 ```
+With `{{blueName}}` and `{{redName}}` being the names of the bots.
 
+- With Bruno
+
+Open the rglua collection (under the folder `bruno` in this project) and run the `request-match` request. You can adjust the name of the bots to use in the `Vars` tab. 
+
+The names must correspond to names of bots in the database.  
+
+Checkout the [Default robots](#default-robots) section for more information on the robots available.
+
+### Troubleshooting
+
+Sometimes a `Network deployment_default  Error` can occur. I did not find any other solution than a complete reboot of the host to fix this issue.
+
+you can use the adminer client on a browser at `http://localhost:8888/?pgsql=rglua_db&db=rglua&ns=public` to inspect the database with username `rglua_user` an password `rglua_temporary_password`.
+
+### Default robots
+
+The first time you launch the database (or the first time after a `make clear-db` is run), it is populated with bots under the `bots`. For each file, a bot entity is created, with the field `script` set to the content of the file and the field `name` set to the name of the file **without its extension**. For example to run the script under `random.lua`, the name to use is `random`.
+
+If you want to add a robot to the defaults robots you can put your robot script in a lua file under `bots` and run `make clear-db` to make sure that it will be loaded the next time your launch the database.
 
 Checkout the [Documentation](#documentation) section to learn how to create your own robot.
 

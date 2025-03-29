@@ -27,6 +27,7 @@ func NewRefereeController(e *echo.Echo, refereeService services.RefereeService) 
 }
 
 func (rc *RefereeController) StopMatch(c echo.Context) error {
+	fmt.Println("Forced to stop current match")
 	matchId, err := rc.refereeService.StopMatch()
 	if err != nil {
 		// TODO: handle that case properly
@@ -42,11 +43,12 @@ func (rc *RefereeController) StopMatch(c echo.Context) error {
 }
 
 func (rc *RefereeController) StartMatch(c echo.Context) error {
+	fmt.Println("Start match")
 	var startRequest interfaces.StartRequest
 	err := c.Bind(&startRequest)
 	if err != nil {
-		fmt.Println("Could not bind Start Match request data")
-		return c.String(http.StatusBadRequest, "bad request")
+		fmt.Printf("%v\n", err)
+		return c.String(http.StatusBadRequest, "Bad Request")
 	}
 	startStatus := rc.refereeService.StartMatch(startRequest.MatchId, startRequest.BlueId, startRequest.RedId)
 	startResponse := &interfaces.StartResponse{

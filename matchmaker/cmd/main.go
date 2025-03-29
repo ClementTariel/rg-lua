@@ -2,7 +2,6 @@ package main
 
 import (
 	"database/sql"
-	"flag"
 	"fmt"
 	"strconv"
 
@@ -20,10 +19,6 @@ type StartRequest struct {
 	RedId   uuid.UUID `json:"redId"`
 }
 
-func SetFlags() {
-	flag.Parse()
-}
-
 const (
 	PORT = 4444
 )
@@ -31,44 +26,28 @@ const (
 // TODO WIP
 func main() {
 	var err error
-	SetFlags()
-	tail := flag.Args()
-	if len(tail) != 2 {
-		fmt.Println("Error: Expected 2 lua files in arguments")
-		return
-	}
-	fileName1 := tail[0]
-	fileName2 := tail[1]
 
-	// TODO: WIP connection to db
 	// TODO: load user and password from conf or env
 	user := "matchmaker_user"
 	password := "matchmaker_temporary_password"
-	connStr := fmt.Sprintf("user=%s password=%s dbname=rglua sslmode=disable", user, password)
+	connStr := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
+		user,
+		password,
+		"rglua_db",
+		5432,
+		"rglua")
 	postgresDb, err := sql.Open("postgres", connStr)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("matchmaker could not connect to DB: %v\n", err)
 		return
 	}
+
 	botRepo := db.NewBotRepository(postgresDb)
-	blueId, err := botRepo.GetIdFromName(fileName1)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
-	redId, err := botRepo.GetIdFromName(fileName2)
-	if err != nil {
-		fmt.Printf("%v\n", err)
-		return
-	}
-	matchId := uuid.New()
 
 	e := echo.New()
 
 	matchmakerService := services.NewMatchmakerService(botRepo)
 	controllers.NewMatchmakerController(e, matchmakerService)
-
-	matchmakerService.StartMatch(matchId, blueId, redId)
 
 	e.Logger.Fatal(e.Start(":" + strconv.Itoa(PORT)))
 }

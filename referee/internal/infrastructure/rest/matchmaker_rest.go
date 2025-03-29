@@ -12,7 +12,10 @@ import (
 	"github.com/ClementTariel/rg-lua/rgcore"
 )
 
-const MATCHMAKER_PORT = 4444
+const (
+	MATCHMAKER_HOST = "matchmaker"
+	MATCHMAKER_PORT = 4444
+)
 
 type MatchmakerMS struct {
 }
@@ -26,7 +29,7 @@ func (MatchmakerMS) SaveMatch(matchId uuid.UUID, match []map[int]rgcore.BotState
 		MatchId: matchId,
 		Match:   match,
 	})
-	_, err := http.Post(fmt.Sprintf("http://localhost:%d/save-match", MATCHMAKER_PORT), "application/json", bytes.NewBuffer(postBody))
+	_, err := http.Post(fmt.Sprintf("http://%s:%d/save-match", MATCHMAKER_HOST, MATCHMAKER_PORT), "application/json", bytes.NewBuffer(postBody))
 	return err
 }
 
@@ -35,6 +38,6 @@ func (MatchmakerMS) CancelMatch(matchId uuid.UUID, error error) error {
 		MatchId: matchId,
 		Error:   error,
 	})
-	_, err := http.Post(fmt.Sprintf("http://localhost:%d/cancel-match", MATCHMAKER_PORT), "application/json", bytes.NewBuffer(postBody))
+	_, err := http.Post(fmt.Sprintf("http://%s:%d/cancel-match", MATCHMAKER_HOST, MATCHMAKER_PORT), "application/json", bytes.NewBuffer(postBody))
 	return err
 }

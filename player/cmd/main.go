@@ -8,25 +8,18 @@ import (
 
 	"github.com/ClementTariel/rg-lua/player/internal/application/controllers"
 	"github.com/ClementTariel/rg-lua/player/internal/application/services"
-	"github.com/ClementTariel/rg-lua/rgcore"
 	"github.com/ClementTariel/rg-lua/rgcore/rgdebug"
 )
 
 var (
-	PORT      int
-	TRUE_BLUE bool
+	PORT = 1111
 )
 
 func SetFlags() {
 	flag.BoolVar(&rgdebug.VERBOSE, "v", false, "")
 	flag.BoolVar(&rgdebug.VERBOSE, "verbose", false, "Show more logs")
-	flag.BoolVar(&TRUE_BLUE, "blue", false, "determine if the player is blue or red")
+	flag.IntVar(&PORT, "p", PORT, "Port")
 	flag.Parse()
-	if TRUE_BLUE {
-		PORT = rgcore.PORT_PLAYER_BLUE
-	} else {
-		PORT = rgcore.PORT_PLAYER_RED
-	}
 }
 
 func main() {

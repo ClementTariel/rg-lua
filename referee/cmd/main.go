@@ -38,14 +38,18 @@ func main() {
 
 	e := echo.New()
 
-	// TODO: WIP connection to db
 	// TODO: load user and password from conf or env
 	user := "referee_user"
 	password := "referee_temporary_password"
-	connStr := fmt.Sprintf("user=%s password=%s dbname=rglua sslmode=disable", user, password)
+	connStr := fmt.Sprintf("postgres://%v:%v@%v:%v/%v?sslmode=disable",
+		user,
+		password,
+		"rglua_db",
+		5432,
+		"rglua")
 	postgresDb, err := sql.Open("postgres", connStr)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Referee could not connect to DB: %v\n", err)
 		return
 	}
 
