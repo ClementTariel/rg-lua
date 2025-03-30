@@ -2,30 +2,30 @@ package main
 
 import (
 	"database/sql"
+	"flag"
 	"fmt"
 	"strconv"
 
-	"github.com/google/uuid"
 	"github.com/labstack/echo"
 
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/application/controllers"
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/application/services"
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/infrastructure/db"
+	"github.com/ClementTariel/rg-lua/rgcore/rgdebug"
 )
-
-type StartRequest struct {
-	MatchId uuid.UUID `json:"matchId"`
-	BlueId  uuid.UUID `json:"blueId"`
-	RedId   uuid.UUID `json:"redId"`
-}
 
 const (
 	PORT = 4444
 )
 
-// TODO WIP
+func SetFlags() {
+	flag.BoolVar(&rgdebug.VERBOSE, "v", false, "")
+	flag.BoolVar(&rgdebug.VERBOSE, "verbose", false, "Show more logs")
+	flag.Parse()
+}
+
 func main() {
-	var err error
+	SetFlags()
 
 	// TODO: load user and password from conf or env
 	user := "matchmaker_user"

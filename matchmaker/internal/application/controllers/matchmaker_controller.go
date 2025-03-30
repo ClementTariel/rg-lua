@@ -31,7 +31,7 @@ func (mc *MatchmakerController) SaveMatch(c echo.Context) error {
 	var saveMatchRequest interfaces.SaveMatchRequest
 	err := c.Bind(&saveMatchRequest)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
 	saved := mc.matchmakerService.SaveMatch(saveMatchRequest.MatchId, saveMatchRequest.Match)
@@ -43,7 +43,7 @@ func (mc *MatchmakerController) CancelMatch(c echo.Context) error {
 	var cancelMatchRequest interfaces.CancelMatchRequest
 	err := c.Bind(&cancelMatchRequest)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
 	canceled := mc.matchmakerService.CancelMatch(cancelMatchRequest.MatchId, cancelMatchRequest.Error)
@@ -55,12 +55,12 @@ func (mc *MatchmakerController) AddMatchToQueue(c echo.Context) error {
 	var addPendingMatchRequest interfaces.AddPendingMatchRequest
 	err := c.Bind(&addPendingMatchRequest)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
 	added, err := mc.matchmakerService.AddMatchToQueue(addPendingMatchRequest.BlueName, addPendingMatchRequest.RedName)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return c.String(http.StatusBadRequest, "Bad Request: Invalid bot names")
 	}
 	if added {

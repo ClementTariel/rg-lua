@@ -40,7 +40,7 @@ func (pc *PlayerController) InitPlayer(c echo.Context) error {
 	var initRequest interfaces.InitRequest
 	err := c.Bind(&initRequest)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
 	rgdebug.VPrintf("name : %s\n", initRequest.Name)
@@ -59,7 +59,7 @@ func (pc *PlayerController) Play(c echo.Context) error {
 	var playRequest interfaces.PlayRequest
 	err := c.Bind(&playRequest)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
 	actions, warningCount := pc.playerService.PlayTurn(playRequest.Turn,

@@ -37,14 +37,28 @@ func (s *RefereeService) StopMatch() (uuid.UUID, error) {
 	if s.matchId != uuid.Nil {
 		matchId = s.matchId
 		blue := true
-		_, err1 := s.playerMS.Kill(blue)
-		_, err2 := s.playerMS.Kill(!blue)
-		if err1 != nil {
-			err = err1
+
+		var blueErr error
+		var redErr error
+
+		wg := sync.WaitGroup{}
+		wg.Add(2)
+		go func() {
+			_, blueErr = s.playerMS.Kill(blue)
+			wg.Done()
+		}()
+		go func() {
+			_, redErr = s.playerMS.Kill(!blue)
+			wg.Done()
+		}()
+		wg.Wait()
+
+		if blueErr != nil {
+			err = blueErr
 			fmt.Printf("An Error Occured : %v\n", err)
 		}
-		if err2 != nil {
-			err = err2
+		if redErr != nil {
+			err = redErr
 			fmt.Printf("An Error Occured : %v\n", err)
 		}
 		s.matchId = uuid.Nil
@@ -56,12 +70,12 @@ func (s *RefereeService) StopMatch() (uuid.UUID, error) {
 func (s *RefereeService) StartMatch(matchId uuid.UUID, blueId uuid.UUID, redId uuid.UUID) bool {
 	blueBot, err := s.botRepo.GetById(blueId)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return false
 	}
 	redBot, err := s.botRepo.GetById(redId)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return false
 	}
 	blueWarningCount, redWarningCount, err := s.initMatch(blueBot.Name, blueBot.Script, redBot.Name, redBot.Script)
@@ -73,7 +87,7 @@ func (s *RefereeService) StartMatch(matchId uuid.UUID, blueId uuid.UUID, redId u
 	go func() {
 		match, err := s.playMatch(blueWarningCount, redWarningCount)
 		if err != nil {
-			fmt.Printf("%v\n", err)
+			fmt.Printf("Error: %v\n", err)
 			s.matchmakerMS.CancelMatch(s.matchId, err)
 			return
 		}
@@ -105,7 +119,7 @@ func (s *RefereeService) initMatch(blueName string, blueScript string, redName s
 		err = blueErr
 	}
 	if redErr != nil {
-		fmt.Printf("blue error: %v\n", blueErr)
+		fmt.Printf("red error: %v\n", redErr)
 		err = redErr
 	}
 	return blueWarningCount, redWarningCount, err

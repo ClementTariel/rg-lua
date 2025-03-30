@@ -27,13 +27,12 @@ func NewRefereeController(e *echo.Echo, refereeService services.RefereeService) 
 }
 
 func (rc *RefereeController) StopMatch(c echo.Context) error {
-	fmt.Println("Forced to stop current match")
+	rgdebug.VPrintf("Forced to stop current match")
 	matchId, err := rc.refereeService.StopMatch()
 	if err != nil {
 		// TODO: handle that case properly
-		fmt.Printf("%v\n", err)
-		fmt.Println("WIP Throw an Internal Error")
-		return c.String(http.StatusInternalServerError, "Internal Error")
+		fmt.Printf("Error during match stop: %v\n", err)
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
 	rgdebug.VPrintf("match stopped : %v\n", matchId)
 	stopResponse := &interfaces.StopResponse{
@@ -43,11 +42,11 @@ func (rc *RefereeController) StopMatch(c echo.Context) error {
 }
 
 func (rc *RefereeController) StartMatch(c echo.Context) error {
-	fmt.Println("Start match")
+	rgdebug.VPrintf("Start match")
 	var startRequest interfaces.StartRequest
 	err := c.Bind(&startRequest)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
 	startStatus := rc.refereeService.StartMatch(startRequest.MatchId, startRequest.BlueId, startRequest.RedId)

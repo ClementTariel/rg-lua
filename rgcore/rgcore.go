@@ -156,7 +156,7 @@ func NewRGState() (unsafe.Pointer, error) {
 	C.LoadRg(pl)
 	err := lua.RunScript(pl, GetInitialisationScript(), "[Initialisation Script]")
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return nil, err
 	}
 	return pl, nil
@@ -169,7 +169,7 @@ func InitRG(pl unsafe.Pointer, script string, fileName string) (int, error) {
 	var timeLeft int
 	timeLeft, err = lua.RunScriptWithTimeout(pl, script, fileName, BOT_INIT_TIME_BUDGET, timeoutBuffer)
 	if err != nil {
-		fmt.Printf("err:%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return WARNING_TOLERANCE + 1, err
 	}
 	for timeLeft < 0 && warningCount <= WARNING_TOLERANCE {
@@ -178,7 +178,7 @@ func InitRG(pl unsafe.Pointer, script string, fileName string) (int, error) {
 	}
 	err = lua.RunScript(pl, GetLoadActScript(), "[load act]")
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return WARNING_TOLERANCE + 1, err
 	}
 	return warningCount, err

@@ -51,13 +51,13 @@ func (s *PlayerService) InitNewMatch(name string, script string) (int, error) {
 	s.KillCurrentMatch()
 	err := s.CreateState()
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return rgcore.WARNING_TOLERANCE + 1, err
 	}
 	lua.PushFunction(s.L, rgdebug.GetPrintInLuaFunctionPointer(), "print")
 	warningCount, err := rgcore.InitRG(s.L, script, name)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return warningCount, err
 	}
 	rgdebug.VPrintln("[Successfully initialized]")

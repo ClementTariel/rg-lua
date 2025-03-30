@@ -107,12 +107,11 @@ func (s *MatchmakerService) SaveMatch(matchId uuid.UUID, match []map[int]rgcore.
 }
 
 func (s *MatchmakerService) CancelMatch(matchId uuid.UUID, err error) bool {
-	fmt.Printf("cancel %v because of %v\n", matchId, err)
+	rgdebug.VPrintf("cancel %v because of %v\n", matchId, err)
 	// TODO: cancel match
 	return false
 }
 
-// TODO: WIP TEMPORARY
 func (s *MatchmakerService) KillMatch() error {
 	defer func(s *MatchmakerService) { s.isRunning = false }(s)
 	return s.refereeMS.KillMatch()
@@ -140,7 +139,7 @@ func (s *MatchmakerService) AddMatchToQueue(blueName string, redName string) (bo
 
 func (s *MatchmakerService) StartMatch(pendingMatch entities.PendingMatch) error {
 	s.isRunning = true
-	fmt.Println("Match started, waiting for the result...")
+	rgdebug.VPrintf("Match started, waiting for the result...")
 	return s.refereeMS.StartMatch(uuid.New(), pendingMatch.BlueId, pendingMatch.RedId)
 }
 
