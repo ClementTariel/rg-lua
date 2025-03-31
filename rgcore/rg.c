@@ -115,7 +115,8 @@ void *get_action_wrapper(void *pparams)
     int err = get_action(pl, paction, bot_id);
     *perr = err;
     *pdone = true;
-    pthread_cancel(timeout_thread_id);
+    // // TODO: WIP error here rework timeout cancelation system
+    // pthread_cancel(timeout_thread_id);
     return NULL;
 }
 
@@ -142,7 +143,8 @@ int GetActionWithTimeoutBridge(void *pl, void *paction, int bot_id, int timeout)
     pthread_join(timeout_thread_id, NULL);
     if (!done)
     {
-        pthread_cancel(action_thread_id);
+        // // TODO: WIP error here rework timeout cancelation system
+        // pthread_cancel(action_thread_id);
         if (err == 0)
         {
             err = CUSTOM_TIMEOUT_ERROR; // timeout

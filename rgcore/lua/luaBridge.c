@@ -128,7 +128,8 @@ void *pcall_wrapper(void *pparams)
   if (!*pdone)
   {
     *pdone = true;
-    pthread_cancel(timeout_thread_id);
+    // // TODO: WIP error here rework timeout cancelation system
+    // pthread_cancel(timeout_thread_id);
   }
   pthread_mutex_unlock(pdone_mutex);
   return NULL;
@@ -178,7 +179,8 @@ int PcallWithTimeoutBridge(void *pl, int nargs, int nresults, int msgh, int time
   if (!done)
   {
     done = true;
-    pthread_cancel(thread_id);
+    // // TODO: WIP error here rework timeout cancelation system
+    // pthread_cancel(thread_id);
     if (err == 0)
     {
       err = CUSTOM_TIMEOUT_ERROR; // timeout
