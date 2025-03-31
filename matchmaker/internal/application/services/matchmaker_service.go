@@ -102,8 +102,15 @@ func (s *MatchmakerService) SaveMatch(matchId uuid.UUID, match []map[int]rgcore.
 		}
 	}
 	fmt.Printf("%v - %v\n", score1, score2)
+	s.isRunning = false
 	// TODO: save in db
-	return false
+	saved := false
+	s.isRunning = false
+	err := s.StartDebouncedMatch()
+	if err != nil {
+		rgdebug.VPrintf("Error: %v\n", err)
+	}
+	return saved
 }
 
 func (s *MatchmakerService) CancelMatch(matchId uuid.UUID, err error) bool {
@@ -118,6 +125,7 @@ func (s *MatchmakerService) KillMatch() error {
 }
 
 func (s *MatchmakerService) AddMatchToQueue(blueName string, redName string) (bool, error) {
+	rgdebug.VPrintf("Add match to queue: %s - %s\n", blueName, redName)
 	// TODO: better system to handle queue size and check on elements added
 	if s.matchQueue.IsFull() {
 		return false, nil
@@ -139,14 +147,16 @@ func (s *MatchmakerService) AddMatchToQueue(blueName string, redName string) (bo
 
 func (s *MatchmakerService) StartMatch(pendingMatch entities.PendingMatch) error {
 	s.isRunning = true
-	rgdebug.VPrintf("Match started, waiting for the result...")
+	rgdebug.VPrintln("Match started, waiting for the result...")
 	return s.refereeMS.StartMatch(uuid.New(), pendingMatch.BlueId, pendingMatch.RedId)
 }
 
 func (s *MatchmakerService) StartDebouncedMatch() error {
+	rgdebug.VPrintln("Debounced start...")
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.isRunning {
+		rgdebug.VPrintln("Abort, already start")
 		return nil
 	}
 	if s.debounceTimer != nil {
@@ -154,6 +164,7 @@ func (s *MatchmakerService) StartDebouncedMatch() error {
 	}
 	pendingMatch, err := s.matchQueue.Pop()
 	if err != nil {
+		rgdebug.VPrintf("Abort: %v\n", err)
 		return err
 	}
 	s.debounceTimer = time.AfterFunc(MATCH_TIMEOUT, func() {
