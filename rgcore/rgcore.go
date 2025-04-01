@@ -108,29 +108,30 @@ func GetActionWithTimeout(pl unsafe.Pointer, bot Bot) (Action, *rgerrors.RGError
 		Y:          -1,
 	}
 	errCode := int(C.GetActionWithTimeoutBridge(pl, unsafe.Pointer(&cAction), C.int(bot.Id), BOT_ACTION_TIME_BUDGET))
-	if errCode == 0 &&
-		ActionType(cAction.actionType) == MOVE ||
+	err := rgerrors.GetRGError(errCode)
+	if errCode != 0 {
+		fmt.Printf("Error after timed exection: %v\n", err)
+		return action, err
+	}
+	if ActionType(cAction.actionType) == MOVE ||
 		ActionType(cAction.actionType) == ATTACK ||
 		ActionType(cAction.actionType) == GUARD ||
 		ActionType(cAction.actionType) == SUICIDE {
 		action.ActionType = ActionType(cAction.actionType)
 	} else {
-		errCode = 104
+		action.ActionType = GUARD
+		fmt.Printf("Error after timed exection: %v\n", rgerrors.INVALID_ACTION_TYPE_ERROR)
+		return action, rgerrors.INVALID_ACTION_TYPE_ERROR
 	}
-	if errCode == 0 &&
-		int(cAction.x) >= 0 &&
+	if int(cAction.x) >= 0 &&
 		int(cAction.x) < GRID_SIZE &&
 		int(cAction.y) >= 0 &&
 		int(cAction.y) < GRID_SIZE {
 		action.X = int(cAction.x)
 		action.Y = int(cAction.y)
 	} else {
-		action.X = -1
-		action.Y = -1
-	}
-	err := rgerrors.GetRGError(errCode)
-	if errors.Unwrap(err) != nil {
-		return Action{ActionType: SUICIDE, X: -1, Y: -1}, err
+		action.ActionType = GUARD
+		err = rgerrors.INVALID_MOVE_ERROR
 	}
 	if action.ActionType == MOVE {
 		if WalkDist(bot.X, bot.Y, action.X, action.Y) != 1 {

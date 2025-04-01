@@ -42,7 +42,7 @@ func (rc *RefereeController) StopMatch(c echo.Context) error {
 }
 
 func (rc *RefereeController) StartMatch(c echo.Context) error {
-	rgdebug.VPrintf("Start match")
+	rgdebug.VPrintln("Start match")
 	var startRequest interfaces.StartRequest
 	err := c.Bind(&startRequest)
 	if err != nil {

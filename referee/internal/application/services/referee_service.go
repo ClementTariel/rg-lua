@@ -91,6 +91,7 @@ func (s *RefereeService) StartMatch(matchId uuid.UUID, blueId uuid.UUID, redId u
 			s.matchmakerMS.CancelMatch(s.matchId, err)
 			return
 		}
+		rgdebug.VPrintln("Save match")
 		s.matchmakerMS.SaveMatch(s.matchId, match)
 	}()
 	return true
@@ -137,6 +138,7 @@ func (s *RefereeService) initPlayer(isBlue bool, name string, script string) (in
 func (s *RefereeService) playTurn(playerId int, turn int, allBots []rgcore.Bot, previousWarningCount int) (map[int]rgcore.Action, int) {
 	actions, warningCount, err := s.playerMS.PlayTurn(playerId == rgcore.BLUE_ID, turn, rgcore.Allies(playerId, allBots), rgcore.Enemies(playerId, allBots), previousWarningCount)
 	if err != nil {
+		fmt.Printf("Error: %v\n", err)
 		warningCount = rgcore.WARNING_TOLERANCE + 1
 		for _, bot := range rgcore.Allies(playerId, allBots) {
 			actions[bot.Id] = rgcore.Action{
