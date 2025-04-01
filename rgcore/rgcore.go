@@ -108,29 +108,30 @@ func GetActionWithTimeout(pl unsafe.Pointer, bot Bot) (Action, *rgerrors.RGError
 		Y:          -1,
 	}
 	errCode := int(C.GetActionWithTimeoutBridge(pl, unsafe.Pointer(&cAction), C.int(bot.Id), BOT_ACTION_TIME_BUDGET))
-	if errCode == 0 &&
-		ActionType(cAction.actionType) == MOVE ||
+	err := rgerrors.GetRGError(errCode)
+	if errCode != 0 {
+		fmt.Printf("Error after timed exection: %v\n", err)
+		return action, err
+	}
+	if ActionType(cAction.actionType) == MOVE ||
 		ActionType(cAction.actionType) == ATTACK ||
 		ActionType(cAction.actionType) == GUARD ||
 		ActionType(cAction.actionType) == SUICIDE {
 		action.ActionType = ActionType(cAction.actionType)
 	} else {
-		errCode = 104
+		action.ActionType = GUARD
+		fmt.Printf("Error after timed exection: %v\n", rgerrors.INVALID_ACTION_TYPE_ERROR)
+		return action, rgerrors.INVALID_ACTION_TYPE_ERROR
 	}
-	if errCode == 0 &&
-		int(cAction.x) >= 0 &&
+	if int(cAction.x) >= 0 &&
 		int(cAction.x) < GRID_SIZE &&
 		int(cAction.y) >= 0 &&
 		int(cAction.y) < GRID_SIZE {
 		action.X = int(cAction.x)
 		action.Y = int(cAction.y)
 	} else {
-		action.X = -1
-		action.Y = -1
-	}
-	err := rgerrors.GetRGError(errCode)
-	if errors.Unwrap(err) != nil {
-		return Action{ActionType: SUICIDE, X: -1, Y: -1}, err
+		action.ActionType = GUARD
+		err = rgerrors.INVALID_MOVE_ERROR
 	}
 	if action.ActionType == MOVE {
 		if WalkDist(bot.X, bot.Y, action.X, action.Y) != 1 {
@@ -156,7 +157,7 @@ func NewRGState() (unsafe.Pointer, error) {
 	C.LoadRg(pl)
 	err := lua.RunScript(pl, GetInitialisationScript(), "[Initialisation Script]")
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return nil, err
 	}
 	return pl, nil
@@ -169,7 +170,7 @@ func InitRG(pl unsafe.Pointer, script string, fileName string) (int, error) {
 	var timeLeft int
 	timeLeft, err = lua.RunScriptWithTimeout(pl, script, fileName, BOT_INIT_TIME_BUDGET, timeoutBuffer)
 	if err != nil {
-		fmt.Printf("err:%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return WARNING_TOLERANCE + 1, err
 	}
 	for timeLeft < 0 && warningCount <= WARNING_TOLERANCE {
@@ -178,7 +179,7 @@ func InitRG(pl unsafe.Pointer, script string, fileName string) (int, error) {
 	}
 	err = lua.RunScript(pl, GetLoadActScript(), "[load act]")
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return WARNING_TOLERANCE + 1, err
 	}
 	return warningCount, err

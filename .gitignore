@@ -94,5 +94,8 @@ Module.symvers
 Mkfile.old
 dkms.conf
 
+# generated file
+deployment/init.sql
+
 # TODO
 TODO.md

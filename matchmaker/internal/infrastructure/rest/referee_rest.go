@@ -29,11 +29,13 @@ func (RefereeMS) StartMatch(matchId uuid.UUID, blueId uuid.UUID, redId uuid.UUID
 		RedId:   redId,
 		MatchId: uuid.New(),
 	})
-	_, err := http.Post(fmt.Sprintf("http://%s:%d/start", REFEREE_HOST, REFEREE_PORT), "application/json", bytes.NewBuffer(postBody))
+	resp, err := http.Post(fmt.Sprintf("http://%s:%d/start", REFEREE_HOST, REFEREE_PORT), "application/json", bytes.NewBuffer(postBody))
+	resp.Body.Close()
 	return err
 }
 
 func (RefereeMS) KillMatch() error {
-	_, err := http.Post(fmt.Sprintf("http://%s:%d/stop", REFEREE_HOST, REFEREE_PORT), "", nil)
+	resp, err := http.Post(fmt.Sprintf("http://%s:%d/stop", REFEREE_HOST, REFEREE_PORT), "", nil)
+	resp.Body.Close()
 	return err
 }

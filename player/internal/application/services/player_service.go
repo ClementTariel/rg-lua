@@ -28,6 +28,7 @@ func (s *PlayerService) CreateState() error {
 	if !s.Running {
 		s.L, err = rgcore.NewRGState()
 		if err != nil {
+			fmt.Printf("Error: %v\n", err)
 			return err
 		}
 		s.Running = true
@@ -51,13 +52,13 @@ func (s *PlayerService) InitNewMatch(name string, script string) (int, error) {
 	s.KillCurrentMatch()
 	err := s.CreateState()
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return rgcore.WARNING_TOLERANCE + 1, err
 	}
 	lua.PushFunction(s.L, rgdebug.GetPrintInLuaFunctionPointer(), "print")
 	warningCount, err := rgcore.InitRG(s.L, script, name)
 	if err != nil {
-		fmt.Printf("%v\n", err)
+		fmt.Printf("Error: %v\n", err)
 		return warningCount, err
 	}
 	rgdebug.VPrintln("[Successfully initialized]")
@@ -121,7 +122,6 @@ func (s *PlayerService) PlayTurn(turn int, allies []rgcore.Bot, enemies []rgcore
 			continue
 		}
 		action, err := rgcore.GetActionWithTimeout(s.L, bot)
-		rgdebug.VPrintf("bot %d (%v) act (%d,%d,%d), %v\n", bot.Id, bot, action.ActionType, action.X, action.Y, err)
 		switch true {
 		case errors.Is(err, rgerrors.TIMEOUT_ERROR):
 			warningCount++
@@ -133,6 +133,8 @@ func (s *PlayerService) PlayTurn(turn int, allies []rgcore.Bot, enemies []rgcore
 		case errors.Unwrap(err) != nil:
 			fmt.Printf("disqualified because of %v\n", err)
 			warningCount = rgcore.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
+		default:
+			rgdebug.VPrintf("bot %d (%v) act (%d,%d,%d), %v\n", bot.Id, bot, action.ActionType, action.X, action.Y, err)
 		}
 		if warningCount > rgcore.WARNING_TOLERANCE {
 			continue
