@@ -29,7 +29,8 @@ func (MatchmakerMS) SaveMatch(matchId uuid.UUID, match []map[int]rgcore.BotState
 		MatchId: matchId,
 		Match:   match,
 	})
-	_, err := http.Post(fmt.Sprintf("http://%s:%d/save-match", MATCHMAKER_HOST, MATCHMAKER_PORT), "application/json", bytes.NewBuffer(postBody))
+	resp, err := http.Post(fmt.Sprintf("http://%s:%d/save-match", MATCHMAKER_HOST, MATCHMAKER_PORT), "application/json", bytes.NewBuffer(postBody))
+	resp.Body.Close()
 	return err
 }
 
@@ -38,6 +39,7 @@ func (MatchmakerMS) CancelMatch(matchId uuid.UUID, error error) error {
 		MatchId: matchId,
 		Error:   error,
 	})
-	_, err := http.Post(fmt.Sprintf("http://%s:%d/cancel-match", MATCHMAKER_HOST, MATCHMAKER_PORT), "application/json", bytes.NewBuffer(postBody))
+	resp, err := http.Post(fmt.Sprintf("http://%s:%d/cancel-match", MATCHMAKER_HOST, MATCHMAKER_PORT), "application/json", bytes.NewBuffer(postBody))
+	resp.Body.Close()
 	return err
 }
