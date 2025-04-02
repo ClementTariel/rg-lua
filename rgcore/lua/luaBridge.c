@@ -2,6 +2,11 @@
 
 const int CUSTOM_TIMEOUT_ERROR = 408;
 
+static pthread_mutex_t timeout_mutex;
+static volatile bool done = false;
+static volatile bool timeout_triggered = 0;
+static volatile int timeout_count = 0;
+
 // Copy luaB_next and luaB_pairs from source code to avoid importing an unsafe lib
 static int luaB_next(lua_State *L)
 {
@@ -105,88 +110,123 @@ int LoadStringBridge(void *pl, const char *s)
 
 int PcallBridge(void *pl, int nargs, int nresults, int msgh)
 {
-  return lua_pcall((lua_State *)pl, nargs, nresults, msgh);
+  return PcallWithTimeoutBridge(pl, nargs, nresults, msgh, -1);
 }
 
-void *pcall_wrapper(void *pparams)
+void *timeout_function(void *pparams)
 {
-  // allow cancel when stuck in infinite loop
-  // TODO: not safe, might mess with memory allocation
-  pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-  pcall_thread_params params = *(pcall_thread_params *)pparams;
-  void *pl = params.pl;
-  int nargs = params.nargs;
-  int nresults = params.nresults;
-  int msgh = params.msgh;
-  int *perr = params.perr;
-  bool *pdone = params.pdone;
-  pthread_mutex_t *pdone_mutex = params.pdone_mutex;
-  pthread_t timeout_thread_id = params.timeout_thread_id;
-  int err = lua_pcall((lua_State *)pl, nargs, nresults, msgh);
-  *perr = err;
-  pthread_mutex_lock(pdone_mutex);
-  if (!*pdone)
+  timeout_params params = *(timeout_params *)pparams;
+  int timeout = params.timeout;
+  if (timeout < 0)
   {
-    *pdone = true;
-    // // TODO: WIP error here rework timeout cancelation system
-    // pthread_cancel(timeout_thread_id);
+    return NULL;
   }
-  pthread_mutex_unlock(pdone_mutex);
-  return NULL;
-}
 
-void *timeout_function(void *ptimeout)
-{
   // TODO maybe take into account a slight shift caused by accumulated errors
-  int timeout = *(int *)ptimeout;
   struct timespec ts;
+  // TODO: reduce number of chuncks if performance decreases too much
   int chunck_count = 100;
   ts.tv_nsec = (timeout * 1000000 / chunck_count) % ((int)1e9);
   ts.tv_sec = timeout / (1000 * chunck_count);
-  for (int i = 0; i < chunck_count; i++)
+  bool pending = true;
+  while (pending)
   {
-    nanosleep(&ts, NULL);
+    for (int i = 0; i < chunck_count; i++)
+    {
+      nanosleep(&ts, NULL);
+      // Shoud be safe to read without mutex because it is a boolean.
+      pending = !done;
+      if (!pending)
+      {
+        // make sure it is not a misreading of done because of mutex bypass
+        pthread_mutex_lock(&timeout_mutex);
+        pending = !done;
+        pthread_mutex_unlock(&timeout_mutex);
+        if (!pending)
+        {
+          return NULL;
+        }
+      }
+    }
+    // Should be safe to call without mutex because it is a boolean
+    if (!timeout_triggered)
+    {
+      // Should be safe to modify without mutex because it is a boolean,
+      // no other thread can modify it and it can only be set to true
+      timeout_triggered = true;
+    }
+    pthread_mutex_lock(&timeout_mutex);
+    timeout_count++;
+    pthread_mutex_unlock(&timeout_mutex);
   }
-  return NULL;
+}
+
+void timeout_hook(lua_State *pl, lua_Debug *ar)
+{
+  // Should be safe to call without mutex because it is a boolean
+  if (timeout_triggered)
+  {
+    pthread_mutex_lock(&timeout_mutex);
+    int local_timeout_count = timeout_count;
+    pthread_mutex_unlock(&timeout_mutex);
+    // make sure that there was no misreading caused by mutex bypass
+    if (local_timeout_count > 0)
+    {
+      // Should be safe to modify without mutex because it is a boolean,
+      // no other thread can modify it and it can only be set to true
+      done = true;
+      luaL_error(pl, "TimeoutError");
+      // code here won't be reached
+    }
+  }
 }
 
 int PcallWithTimeoutBridge(void *pl, int nargs, int nresults, int msgh, int timeout)
 {
-  bool done = false;
-  pthread_mutex_t done_mutex;
-
-  pthread_t timeout_thread_id;
-  pthread_t thread_id;
-
-  pthread_mutex_init(&done_mutex, NULL);
-
-  pthread_create(&timeout_thread_id, NULL, timeout_function, &timeout);
+  if (timeout == 0)
+  {
+    return CUSTOM_TIMEOUT_ERROR;
+  }
 
   int err = 0;
-  pcall_thread_params params;
-  params.pl = pl;
-  params.perr = &err;
-  params.pdone = &done;
-  params.pdone_mutex = &done_mutex;
-  params.timeout_thread_id = timeout_thread_id;
-  params.nargs = nargs;
-  params.nresults = nresults;
-  params.msgh = msgh;
+  pthread_t timeout_thread_id;
 
-  pthread_create(&thread_id, NULL, pcall_wrapper, &params);
-  pthread_join(timeout_thread_id, NULL);
-  pthread_mutex_lock(&done_mutex);
-  if (!done)
+  int mutex_err = pthread_mutex_init(&timeout_mutex, NULL);
+  if (mutex_err != 0)
   {
-    done = true;
-    // // TODO: WIP error here rework timeout cancelation system
-    // pthread_cancel(thread_id);
-    if (err == 0)
-    {
-      err = CUSTOM_TIMEOUT_ERROR; // timeout
-    }
+    return mutex_err;
   }
-  pthread_mutex_unlock(&done_mutex);
-  pthread_join(thread_id, NULL);
+
+  pthread_mutex_lock(&timeout_mutex);
+  done = false;
+  timeout_count = 0;
+  pthread_mutex_unlock(&timeout_mutex);
+
+  timeout_params params;
+  params.timeout = timeout;
+  pthread_create(&timeout_thread_id, NULL, timeout_function, &params);
+
+  if (timeout > 0)
+  {
+    // ~ same number of hook calls for any timeout
+    int num_instruction = timeout * 10;
+    lua_sethook(pl, &timeout_hook, LUA_MASKCOUNT, num_instruction);
+  }
+  err = lua_pcall((lua_State *)pl, nargs, nresults, msgh);
+  lua_sethook(pl, &timeout_hook, 0, 0);
+
+  pthread_mutex_lock(&timeout_mutex);
+  done = true;
+  if (timeout_count > 0)
+  {
+    err = CUSTOM_TIMEOUT_ERROR; // timeout
+  }
+  pthread_mutex_unlock(&timeout_mutex);
+  pthread_join(timeout_thread_id, NULL);
+  mutex_err = pthread_mutex_destroy(&timeout_mutex);
+  if (mutex_err != 0)
+  {
+    return mutex_err;
+  }
   return err;
 }

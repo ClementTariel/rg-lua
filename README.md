@@ -12,6 +12,11 @@ The project is currently Work In Progress, **some security features aren't imple
 
 The rebirth of robotgame but in lua instead of python.
 
+Robot Game - Legendary Ultimate Arena is a competitive game featuring turn based battles where two teams of robots fight in an arena. Players write the lua script controlling robots of their team, to make them move, attack, defend or even explode. The goal is to have more robots than the opposing team at the end of the battle.
+
+Project currently Work In Progress.
+Stay tuned.
+
 ## Requirement 
 
 You need:
@@ -70,9 +75,6 @@ The first time you launch the database (or the first time after a `make clear-db
 If you want to add a robot to the defaults robots you can put your robot script in a lua file under `bots` and run `make clear-db` to make sure that it will be loaded the next time your launch the database.
 
 Checkout the [Documentation](#documentation) section to learn how to create your own robot.
-
-Project currently Work In Progress.
-Stay tuned.
 
 ## Documentation
 
