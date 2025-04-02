@@ -34,20 +34,6 @@ typedef struct Action
     int y;
 } Action;
 
-typedef struct get_action_thread_params
-{
-    void *pl;
-    void *paction;
-    int bot_id;
-    int *perr;
-    bool *pdone;
-    pthread_t timeout_thread_id;
-} get_action_thread_params;
-
-int get_action(void *pl, void *paction, int bot_id);
-
-void *get_action_wrapper(void *pparams);
-
 int GetActionWithTimeoutBridge(void *pl, void *paction, int bot_id, int timeout);
 
 int rg_walk_dist_in_lua(lua_State *pl);

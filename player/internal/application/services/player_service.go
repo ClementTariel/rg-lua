@@ -125,6 +125,9 @@ func (s *PlayerService) PlayTurn(turn int, allies []rgcore.Bot, enemies []rgcore
 		switch true {
 		case errors.Is(err, rgerrors.TIMEOUT_ERROR):
 			warningCount++
+			if warningCount > rgcore.WARNING_TOLERANCE {
+				break
+			}
 			fallthrough
 		case errors.Is(err, rgerrors.INVALID_MOVE_ERROR):
 			action.ActionType = rgcore.GUARD

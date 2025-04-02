@@ -5,7 +5,7 @@
 #include "lua/luaBridge.c"
 #include "grid/grid.c"
 
-int get_action(void *pl, void *paction, int bot_id)
+int GetActionWithTimeoutBridge(void *pl, void *paction, int bot_id, int timeout)
 {
     int clean_stack_size = lua_gettop(pl);
     int err = 0;
@@ -48,7 +48,9 @@ int get_action(void *pl, void *paction, int bot_id)
     }
     lua_pushvalue(pl, -4);
     lua_pushvalue(pl, -4);
-    err = lua_pcall(pl, 2, 1, 0); // 2 arguments, one result
+
+    err = PcallWithTimeoutBridge(pl, 2, 1, 0, timeout); // 2 arguments, one result
+
     if (err != 0)
     {
         lua_pop(pl, lua_gettop(pl) - clean_stack_size);
@@ -97,60 +99,6 @@ int get_action(void *pl, void *paction, int bot_id)
     lua_pop(pl, 1);
 
     lua_pop(pl, lua_gettop(pl) - clean_stack_size);
-    return err;
-}
-
-void *get_action_wrapper(void *pparams)
-{
-    // allow cancel when stuck in infinite loop
-    // TODO: not safe, might mess with memory allocation
-    pthread_setcanceltype(PTHREAD_CANCEL_ASYNCHRONOUS, NULL);
-    get_action_thread_params params = *(get_action_thread_params *)pparams;
-    void *pl = params.pl;
-    void *paction = params.paction;
-    int bot_id = params.bot_id;
-    int *perr = params.perr;
-    bool *pdone = params.pdone;
-    pthread_t timeout_thread_id = params.timeout_thread_id;
-    int err = get_action(pl, paction, bot_id);
-    *perr = err;
-    *pdone = true;
-    // // TODO: WIP error here rework timeout cancelation system
-    // pthread_cancel(timeout_thread_id);
-    return NULL;
-}
-
-int GetActionWithTimeoutBridge(void *pl, void *paction, int bot_id, int timeout)
-{
-    bool done = false;
-
-    pthread_t timeout_thread_id;
-
-    pthread_create(&timeout_thread_id, NULL, timeout_function, &timeout);
-
-    pthread_t action_thread_id;
-    int err = 0;
-    get_action_thread_params params;
-    params.pl = pl;
-    params.paction = paction;
-    params.bot_id = bot_id;
-    params.perr = &err;
-    params.pdone = &done;
-    params.timeout_thread_id = timeout_thread_id;
-
-    pthread_create(&action_thread_id, NULL, get_action_wrapper, &params);
-
-    pthread_join(timeout_thread_id, NULL);
-    if (!done)
-    {
-        // // TODO: WIP error here rework timeout cancelation system
-        // pthread_cancel(action_thread_id);
-        if (err == 0)
-        {
-            err = CUSTOM_TIMEOUT_ERROR; // timeout
-        }
-    }
-    pthread_join(action_thread_id, NULL);
     return err;
 }
 
