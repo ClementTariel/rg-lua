@@ -34,8 +34,11 @@ func (mc *MatchmakerController) SaveMatch(c echo.Context) error {
 		fmt.Printf("Error: %v\n", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
-	saved := mc.matchmakerService.SaveMatch(saveMatchRequest.MatchId, saveMatchRequest.Match)
-	rgdebug.VPrintf("saved : %v\n", saved)
+	err = mc.matchmakerService.SaveMatch(saveMatchRequest.MatchId, saveMatchRequest.Game)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return c.String(http.StatusInternalServerError, "Internal Error")
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 

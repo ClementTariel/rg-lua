@@ -3,16 +3,9 @@ package entities
 import (
 	"errors"
 	"sync"
-
-	"github.com/google/uuid"
 )
 
 const QUEUE_SIZE = 10
-
-type PendingMatch struct {
-	BlueId uuid.UUID
-	RedId  uuid.UUID
-}
 
 type MatchQueue struct {
 	pendingMatchs [QUEUE_SIZE]PendingMatch

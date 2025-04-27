@@ -27,7 +27,7 @@ func (RefereeMS) StartMatch(matchId uuid.UUID, blueId uuid.UUID, redId uuid.UUID
 	postBody, _ := json.Marshal(external.RefereeStartMatchRequest{
 		BlueId:  blueId,
 		RedId:   redId,
-		MatchId: uuid.New(),
+		MatchId: matchId,
 	})
 	resp, err := http.Post(fmt.Sprintf("http://%s:%d/start", REFEREE_HOST, REFEREE_PORT), "application/json", bytes.NewBuffer(postBody))
 	resp.Body.Close()

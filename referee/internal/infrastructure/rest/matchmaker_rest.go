@@ -24,10 +24,10 @@ func NewMatchmakerMS() external.MatchmakerMS {
 	return MatchmakerMS{}
 }
 
-func (MatchmakerMS) SaveMatch(matchId uuid.UUID, match []map[int]rgcore.BotState) error {
+func (MatchmakerMS) SaveMatch(matchId uuid.UUID, game []map[int]rgcore.BotState) error {
 	postBody, _ := json.Marshal(external.MatchmakerSaveMatchRequest{
 		MatchId: matchId,
-		Match:   match,
+		Game:    game,
 	})
 	resp, err := http.Post(fmt.Sprintf("http://%s:%d/save-match", MATCHMAKER_HOST, MATCHMAKER_PORT), "application/json", bytes.NewBuffer(postBody))
 	resp.Body.Close()

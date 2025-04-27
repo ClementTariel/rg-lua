@@ -8,7 +8,7 @@ import (
 
 type MatchmakerSaveMatchRequest struct {
 	MatchId uuid.UUID                 `json:"matchId"`
-	Match   []map[int]rgcore.BotState `json:"match"`
+	Game    []map[int]rgcore.BotState `json:"game"`
 }
 
 type MatchmakerCancelMatchRequest struct {

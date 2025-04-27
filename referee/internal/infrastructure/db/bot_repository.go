@@ -22,7 +22,7 @@ func NewBotRepository(db *sql.DB) repositories.BotRepository {
 }
 
 func (br *BotRepository) GetById(id uuid.UUID) (entities.Bot, error) {
-	stmt, err := br.db.Prepare("SELECT name, script FROM bots WHERE id= $1")
+	stmt, err := br.db.Prepare("SELECT name, script FROM bots WHERE id=$1")
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
 		return entities.Bot{}, err
