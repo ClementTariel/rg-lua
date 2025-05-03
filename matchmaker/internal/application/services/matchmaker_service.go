@@ -21,7 +21,7 @@ const MATCH_TIMEOUT = 2 *
 	// Convert from nanoseconds to milliseconds
 	1000000 *
 	// Init time
-	((rgcore.BOT_ACTION_TIME_BUDGET *
+	((rgcore.BOT_INIT_TIME_BUDGET *
 		// number of bots per wave
 		2 * rgcore.SPAWN_COUNT *
 		// number of waves
