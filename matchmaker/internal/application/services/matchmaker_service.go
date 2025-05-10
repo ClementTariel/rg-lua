@@ -106,11 +106,14 @@ func (s *MatchmakerService) SaveMatch(matchId uuid.UUID, game []map[int]rgcore.B
 		}
 	}
 	fmt.Printf("%v - %v\n", score1, score2)
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if matchId != s.currentMatch.Id {
 		err := errors.New("Corrupted Match ID")
 		fmt.Printf("Error: %v\n", err)
 		return err
 	}
+	s.isRunning = false
 	err := s.matchRepo.Save(entities.Match{
 		Id:       matchId,
 		BotId1:   s.currentMatch.BotId1,
@@ -122,14 +125,10 @@ func (s *MatchmakerService) SaveMatch(matchId uuid.UUID, game []map[int]rgcore.B
 		Score1:   score1,
 		Score2:   score2,
 	})
-	s.isRunning = false
 	if err != nil {
 		rgdebug.VPrintf("Error: %v\n", err)
 	}
-	err = s.StartDebouncedMatch()
-	if err != nil {
-		rgdebug.VPrintf("Error: %v\n", err)
-	}
+	go s.StartDebouncedMatch()
 	return err
 }
 
@@ -140,7 +139,11 @@ func (s *MatchmakerService) CancelMatch(matchId uuid.UUID, err error) bool {
 }
 
 func (s *MatchmakerService) KillMatch() error {
-	defer func(s *MatchmakerService) { s.isRunning = false }(s)
+	s.mu.Lock()
+	defer func() {
+		s.isRunning = false
+		s.mu.Unlock()
+	}()
 	return s.refereeMS.KillMatch()
 }
 
@@ -148,6 +151,7 @@ func (s *MatchmakerService) AddMatchToQueue(blueName string, redName string) (bo
 	rgdebug.VPrintf("Add match to queue: %s - %s\n", blueName, redName)
 	// TODO: better system to handle queue size and check on elements added
 	if s.matchQueue.IsFull() {
+		rgdebug.VPrintln("Queue is full")
 		return false, nil
 	}
 	blueId, err := s.botRepo.GetIdFromName(blueName)
@@ -166,10 +170,8 @@ func (s *MatchmakerService) AddMatchToQueue(blueName string, redName string) (bo
 		BotName2: redName,
 	}
 	added := s.matchQueue.Push(pendingMatch)
-	if !s.isRunning {
-		err = s.StartDebouncedMatch()
-	}
-	return added, err
+	go s.StartDebouncedMatch()
+	return added, nil
 }
 
 func (s *MatchmakerService) StartMatch(pendingMatch entities.PendingMatch) error {
@@ -184,7 +186,7 @@ func (s *MatchmakerService) StartDebouncedMatch() error {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.isRunning {
-		rgdebug.VPrintln("Abort, already start")
+		rgdebug.VPrintln("Abort, already started")
 		return nil
 	}
 	if s.debounceTimer != nil {
@@ -198,7 +200,16 @@ func (s *MatchmakerService) StartDebouncedMatch() error {
 	s.debounceTimer = time.AfterFunc(MATCH_TIMEOUT, func() {
 		s.KillMatch()
 		fmt.Println("Kill match because it took too long")
-		s.StartDebouncedMatch()
+		err := s.StartDebouncedMatch()
+		for err != nil {
+			fmt.Printf("Error: %v", err)
+			if s.matchQueue.IsEmpty() {
+				fmt.Println("Queue is empty")
+				return
+			}
+			fmt.Println("Try next match in queue")
+			err = s.StartDebouncedMatch()
+		}
 	})
 	return s.StartMatch(pendingMatch)
 }

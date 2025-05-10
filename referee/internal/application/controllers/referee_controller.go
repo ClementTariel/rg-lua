@@ -49,9 +49,10 @@ func (rc *RefereeController) StartMatch(c echo.Context) error {
 		fmt.Printf("Error: %v\n", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
-	startStatus := rc.refereeService.StartMatch(startRequest.MatchId, startRequest.BlueId, startRequest.RedId)
-	startResponse := &interfaces.StartResponse{
-		Started: startStatus,
+	err = rc.refereeService.StartMatch(startRequest.MatchId, startRequest.BlueId, startRequest.RedId)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return c.String(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, startResponse)
+	return c.NoContent(http.StatusNoContent)
 }

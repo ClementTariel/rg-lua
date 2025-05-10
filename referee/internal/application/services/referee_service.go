@@ -1,6 +1,7 @@
 package services
 
 import (
+	"errors"
 	"fmt"
 	"math/rand"
 	"sync"
@@ -19,11 +20,12 @@ type RefereeService struct {
 	botRepo      repositories.BotRepository
 	playerMS     external.PlayerMS
 	matchmakerMS external.MatchmakerMS
+	mu           sync.Mutex
 }
 
 func NewRefereeService(botRepo repositories.BotRepository) RefereeService {
 	return RefereeService{
-		matchId:      uuid.New(),
+		matchId:      uuid.Nil,
 		botRepo:      botRepo,
 		playerMS:     rest.NewPlayerMS(),
 		matchmakerMS: rest.NewMatchmakerMS(),
@@ -31,6 +33,8 @@ func NewRefereeService(botRepo repositories.BotRepository) RefereeService {
 }
 
 func (s *RefereeService) StopMatch() (uuid.UUID, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	rgdebug.VPrintln("Stop match")
 	matchId := uuid.Nil
 	var err error
@@ -62,39 +66,58 @@ func (s *RefereeService) StopMatch() (uuid.UUID, error) {
 			fmt.Printf("An Error Occured : %v\n", err)
 		}
 		s.matchId = uuid.Nil
+		rgdebug.VPrintf("Match stopped : %v\n", matchId)
+	} else {
+		rgdebug.VPrintln("No match to stop")
 	}
-	rgdebug.VPrintf("match stopped : %v\n", matchId)
 	return matchId, err
 }
 
-func (s *RefereeService) StartMatch(matchId uuid.UUID, blueId uuid.UUID, redId uuid.UUID) bool {
+func (s *RefereeService) StartMatch(matchId uuid.UUID, blueId uuid.UUID, redId uuid.UUID) error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.matchId != uuid.Nil {
+		err := errors.New("Previous match not killed")
+		fmt.Printf("Error: %v\n", err)
+		return err
+	}
 	blueBot, err := s.botRepo.GetById(blueId)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
-		return false
+		return err
 	}
 	redBot, err := s.botRepo.GetById(redId)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
-		return false
+		return err
 	}
 	blueWarningCount, redWarningCount, err := s.initMatch(blueBot.Name, blueBot.Script, redBot.Name, redBot.Script)
 	if err != nil {
 		fmt.Printf("An Error Occured : %v\n", err)
-		return false
+		return err
 	}
 	s.matchId = matchId
-	go func() {
-		match, err := s.playMatch(blueWarningCount, redWarningCount)
-		if err != nil {
-			fmt.Printf("Error: %v\n", err)
-			s.matchmakerMS.CancelMatch(s.matchId, err)
+	go func(matchId uuid.UUID) {
+		match, matchErr := s.playMatch(blueWarningCount, redWarningCount)
+		if matchErr != nil {
+			fmt.Printf("Error: %v\n", matchErr)
+			s.matchmakerMS.CancelMatch(s.matchId, matchErr)
+			return
+		}
+		s.mu.Lock()
+		defer s.mu.Unlock()
+		if s.matchId != matchId {
+			matchErr = errors.New("Match stopped before the end")
+			fmt.Printf("Error: %v\n", matchErr)
 			return
 		}
 		rgdebug.VPrintln("Save match")
-		s.matchmakerMS.SaveMatch(s.matchId, match)
-	}()
-	return true
+		// TODO: error handling system to mae sure the match has been saved
+		matchErr = s.matchmakerMS.SaveMatch(s.matchId, match)
+		fmt.Printf("Error: %v\n", matchErr)
+		s.matchId = uuid.Nil
+	}(matchId)
+	return nil
 }
 
 func (s *RefereeService) initMatch(blueName string, blueScript string, redName string, redScript string) (int, int, error) {
