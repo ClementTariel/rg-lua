@@ -52,6 +52,8 @@ services:
       - 3333:3333
     depends_on:
       - rglua_db
+      - blue_player
+      - red_player
 
   matchmaker:
     build:
