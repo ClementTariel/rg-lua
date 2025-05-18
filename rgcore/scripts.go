@@ -1,27 +1,31 @@
 package rgcore
 
-import "fmt"
+import (
+	"fmt"
+
+	"github.com/ClementTariel/rg-lua/rgcore/rgconst"
+)
 
 func GetInitialisationScript() string {
-	return `MOVE = ` + fmt.Sprintf("%d", MOVE) + `
-ATTACK = ` + fmt.Sprintf("%d", ATTACK) + `
-GUARD = ` + fmt.Sprintf("%d", GUARD) + `
-SUICIDE = ` + fmt.Sprintf("%d", SUICIDE) + `
-NORMAL = ` + fmt.Sprintf("%d", NORMAL) + `
-SPAWN = ` + fmt.Sprintf("%d", SPAWN) + `
-OBSTACLE = ` + fmt.Sprintf("%d", OBSTACLE) + `
+	return `MOVE = ` + fmt.Sprintf("%d", rgconst.MOVE) + `
+ATTACK = ` + fmt.Sprintf("%d", rgconst.ATTACK) + `
+GUARD = ` + fmt.Sprintf("%d", rgconst.GUARD) + `
+SUICIDE = ` + fmt.Sprintf("%d", rgconst.SUICIDE) + `
+NORMAL = ` + fmt.Sprintf("%d", rgconst.NORMAL) + `
+SPAWN = ` + fmt.Sprintf("%d", rgconst.SPAWN) + `
+OBSTACLE = ` + fmt.Sprintf("%d", rgconst.OBSTACLE) + `
 rg.SETTINGS = {
-	spawn_delay = ` + fmt.Sprintf("%d", SPAWN_DELAY) + `,
-	spawn_count = ` + fmt.Sprintf("%d", SPAWN_COUNT) + `,
-	robot_hp = ` + fmt.Sprintf("%d", MAX_HP) + `,
-	attack_range = ` + fmt.Sprintf("%d", ATTACK_RANGE) + `,
+	spawn_delay = ` + fmt.Sprintf("%d", rgconst.SPAWN_DELAY) + `,
+	spawn_count = ` + fmt.Sprintf("%d", rgconst.SPAWN_COUNT) + `,
+	robot_hp = ` + fmt.Sprintf("%d", rgconst.MAX_HP) + `,
+	attack_range = ` + fmt.Sprintf("%d", rgconst.ATTACK_RANGE) + `,
 	attack_damage = { ` +
-		`min=` + fmt.Sprintf("%d", ATTACK_DAMAGE_MIN) + `, ` +
-		`max=` + fmt.Sprintf("%d", ATTACK_DAMAGE_MAX) +
+		`min=` + fmt.Sprintf("%d", rgconst.ATTACK_DAMAGE_MIN) + `, ` +
+		`max=` + fmt.Sprintf("%d", rgconst.ATTACK_DAMAGE_MAX) +
 		` },
-	suicide_damage = ` + fmt.Sprintf("%d", SUICIDE_DAMAGE) + `,
-	collision_damage = ` + fmt.Sprintf("%d", COLLISION_DAMAGE) + `,
-	max_turn = ` + fmt.Sprintf("%d", MAX_TURN) + `,
+	suicide_damage = ` + fmt.Sprintf("%d", rgconst.SUICIDE_DAMAGE) + `,
+	collision_damage = ` + fmt.Sprintf("%d", rgconst.COLLISION_DAMAGE) + `,
+	max_turn = ` + fmt.Sprintf("%d", rgconst.MAX_TURN) + `,
 }
 __RG_CORE_SYSTEM = {
 	self = {},
@@ -41,7 +45,7 @@ for i = 0,%[1]d-1,1 do
 end
 __RG_CORE_SYSTEM.game.turn = %[2]d
 `
-	return fmt.Sprintf(resetScript, GRID_SIZE, turn)
+	return fmt.Sprintf(resetScript, rgconst.GRID_SIZE, turn)
 }
 
 func GetLoadBotScript(botX int, botY int, botHP int, playerId int, botId string) string {

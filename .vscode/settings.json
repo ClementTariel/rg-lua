@@ -4,6 +4,9 @@
         "rgcore/rgdebug/string_array.h": "c",
         "rgcore/lua/luaBridge.h": "c",
         "rgcore/rg.h": "c",
-        "debug.h": "c"
+        "debug.h": "c",
+        "rgentities.h": "c",
+        "rgconst.h": "c",
+        "grid.h": "c"
     }
 }

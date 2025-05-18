@@ -6,33 +6,7 @@
 #include <lua.h>
 #include <lauxlib.h>
 #include <lualib.h>
-
-enum ActionType
-{
-    MOVE = 0,
-    ATTACK = 1,
-    GUARD = 2,
-    SUICIDE = 3
-};
-enum LocType
-{
-    NORMAL = 4,
-    SPAWN = 5,
-    OBSTACLE = 6
-};
-
-typedef struct Location
-{
-    int X;
-    int Y;
-} Location;
-
-typedef struct Action
-{
-    int actionType;
-    int x;
-    int y;
-} Action;
+#include "rgentities/rgentities.h"
 
 int GetActionWithTimeoutBridge(void *pl, void *paction, int bot_id, int timeout);
 

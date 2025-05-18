@@ -12,14 +12,22 @@ import (
 )
 
 var (
-	PORT = 1111
+	DEFAULT_PRINT_MEMORY_BUDGET = (1 << 15)
+	PORT                        = 1111
 )
+
+var PRINT_MEMORY_BUDGET = DEFAULT_PRINT_MEMORY_BUDGET
 
 func SetFlags() {
 	flag.BoolVar(&rgdebug.VERBOSE, "v", false, "")
 	flag.BoolVar(&rgdebug.VERBOSE, "verbose", false, "Show more logs")
+	flag.IntVar(&PRINT_MEMORY_BUDGET, "m", DEFAULT_PRINT_MEMORY_BUDGET, "")
+	flag.IntVar(&PRINT_MEMORY_BUDGET, "memory", DEFAULT_PRINT_MEMORY_BUDGET, "Memory budget")
 	flag.IntVar(&PORT, "p", PORT, "Port")
 	flag.Parse()
+	if !rgdebug.VERBOSE {
+		PRINT_MEMORY_BUDGET = 0
+	}
 }
 
 func main() {

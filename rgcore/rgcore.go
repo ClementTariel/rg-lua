@@ -8,12 +8,14 @@ package rgcore
 import "C"
 
 import (
-	"errors"
 	"fmt"
 	"unsafe"
 
 	"github.com/ClementTariel/rg-lua/rgcore/lua"
+	"github.com/ClementTariel/rg-lua/rgcore/rgconst"
+	"github.com/ClementTariel/rg-lua/rgcore/rgentities"
 	"github.com/ClementTariel/rg-lua/rgcore/rgerrors"
+	"github.com/ClementTariel/rg-lua/rgcore/rgutils"
 )
 
 type (
@@ -22,130 +24,58 @@ type (
 		x          C.int
 		y          C.int
 	}
-	ActionType int
-	Action     struct {
-		ActionType ActionType
-		X          int
-		Y          int
-	}
-
-	Location struct {
-		X int
-		Y int
-	}
-	LocationType int
-
-	Bot struct {
-		X        int
-		Y        int
-		Hp       int
-		Id       int
-		PlayerId int
-	}
-	BotState struct {
-		Bot    Bot
-		Action Action
-	}
 )
 
-const (
-	MOVE    = ActionType(C.MOVE)
-	ATTACK  = ActionType(C.ATTACK)
-	GUARD   = ActionType(C.GUARD)
-	SUICIDE = ActionType(C.SUICIDE)
-
-	NORMAL    = LocationType(C.NORMAL)
-	SPAWN     = LocationType(C.SPAWN)
-	OBSTACLE  = LocationType(C.OBSTACLE)
-	SPAWN_LEN = int(C.SPAWN_LEN)
-
-	ARENA_RADIUS = float64(C.ARENA_RADIUS)
-	GRID_SIZE    = int(C.GRID_SIZE)
-
-	BLUE_ID = 1
-	RED_ID  = 2
-
-	SPAWN_DELAY       = 10
-	SPAWN_COUNT       = 5
-	MAX_HP            = 50
-	ATTACK_RANGE      = 1
-	ATTACK_DAMAGE_MIN = 8
-	ATTACK_DAMAGE_MAX = 10
-	COLLISION_DAMAGE  = 5
-	SUICIDE_DAMAGE    = 15
-	MAX_TURN          = 100
-
-	WARNING_TOLERANCE      = 3
-	BOT_INIT_TIME_BUDGET   = 1000
-	BOT_ACTION_TIME_BUDGET = 10
-)
-
-var (
-	GRID            = C.GRID
-	SPAWN_LOCATIONS = C.SPAWN_LOCATIONS
-)
-
-func GetLocationType(x int, y int) LocationType {
-	return LocationType(GRID[C.int(x)][C.int(y)])
-}
-
-func GetSpawnLocation(i int) (Location, error) {
-	if i < 0 || i >= len(SPAWN_LOCATIONS) {
-		return Location{X: -1, Y: -1}, errors.New("spawn index out of range in spawn generation")
-	}
-	return Location{X: int(SPAWN_LOCATIONS[C.int(i)].X), Y: int(SPAWN_LOCATIONS[C.int(i)].Y)}, nil
-}
-
-func GetActionWithTimeout(pl unsafe.Pointer, bot Bot) (Action, *rgerrors.RGError) {
+func GetActionWithTimeout(pl unsafe.Pointer, bot rgentities.Bot) (rgentities.Action, *rgerrors.RGError) {
 	cAction := CAction{
-		actionType: (C.int)(SUICIDE),
+		actionType: (C.int)(rgconst.SUICIDE),
 		x:          -1,
 		y:          -1,
 	}
-	action := Action{
-		ActionType: SUICIDE,
+	action := rgentities.Action{
+		ActionType: rgconst.SUICIDE,
 		X:          -1,
 		Y:          -1,
 	}
-	errCode := int(C.GetActionWithTimeoutBridge(pl, unsafe.Pointer(&cAction), C.int(bot.Id), BOT_ACTION_TIME_BUDGET))
+	errCode := int(C.GetActionWithTimeoutBridge(pl, unsafe.Pointer(&cAction), C.int(bot.Id), rgconst.BOT_ACTION_TIME_BUDGET))
 	err := rgerrors.GetRGError(errCode)
 	if errCode != 0 {
 		fmt.Printf("Error after timed exection: %v\n", err)
 		return action, err
 	}
-	if ActionType(cAction.actionType) == MOVE ||
-		ActionType(cAction.actionType) == ATTACK ||
-		ActionType(cAction.actionType) == GUARD ||
-		ActionType(cAction.actionType) == SUICIDE {
-		action.ActionType = ActionType(cAction.actionType)
+	if rgentities.ActionType(cAction.actionType) == rgconst.MOVE ||
+		rgentities.ActionType(cAction.actionType) == rgconst.ATTACK ||
+		rgentities.ActionType(cAction.actionType) == rgconst.GUARD ||
+		rgentities.ActionType(cAction.actionType) == rgconst.SUICIDE {
+		action.ActionType = rgentities.ActionType(cAction.actionType)
 	} else {
-		action.ActionType = GUARD
+		action.ActionType = rgconst.GUARD
 		fmt.Printf("Error after timed exection: %v\n", rgerrors.INVALID_ACTION_TYPE_ERROR)
 		return action, rgerrors.INVALID_ACTION_TYPE_ERROR
 	}
 	if int(cAction.x) >= 0 &&
-		int(cAction.x) < GRID_SIZE &&
+		int(cAction.x) < rgconst.GRID_SIZE &&
 		int(cAction.y) >= 0 &&
-		int(cAction.y) < GRID_SIZE {
+		int(cAction.y) < rgconst.GRID_SIZE {
 		action.X = int(cAction.x)
 		action.Y = int(cAction.y)
 	} else {
-		action.ActionType = GUARD
+		action.ActionType = rgconst.GUARD
 		err = rgerrors.INVALID_MOVE_ERROR
 	}
-	if action.ActionType == MOVE {
-		if WalkDist(bot.X, bot.Y, action.X, action.Y) != 1 {
-			action.ActionType = GUARD
+	if action.ActionType == rgconst.MOVE {
+		if rgutils.WalkDist(bot.X, bot.Y, action.X, action.Y) != 1 {
+			action.ActionType = rgconst.GUARD
 			err = rgerrors.INVALID_MOVE_ERROR
 		}
-	} else if action.ActionType == ATTACK {
-		attackRange := WalkDist(bot.X, bot.Y, action.X, action.Y)
-		if attackRange < 1 || attackRange > ATTACK_RANGE {
-			action.ActionType = GUARD
+	} else if action.ActionType == rgconst.ATTACK {
+		attackRange := rgutils.WalkDist(bot.X, bot.Y, action.X, action.Y)
+		if attackRange < 1 || attackRange > rgconst.ATTACK_RANGE {
+			action.ActionType = rgconst.GUARD
 			err = rgerrors.INVALID_MOVE_ERROR
 		}
 	}
-	if action.ActionType == GUARD || action.ActionType == SUICIDE {
+	if action.ActionType == rgconst.GUARD || action.ActionType == rgconst.SUICIDE {
 		action.X = -1
 		action.Y = -1
 	}
@@ -166,21 +96,21 @@ func NewRGState() (unsafe.Pointer, error) {
 func InitRG(pl unsafe.Pointer, script string, fileName string) (int, error) {
 	var err error
 	warningCount := 0
-	timeoutBuffer := BOT_ACTION_TIME_BUDGET * WARNING_TOLERANCE
+	timeoutBuffer := rgconst.BOT_ACTION_TIME_BUDGET * rgconst.WARNING_TOLERANCE
 	var timeLeft int
-	timeLeft, err = lua.RunScriptWithTimeout(pl, script, fileName, BOT_INIT_TIME_BUDGET, timeoutBuffer)
+	timeLeft, err = lua.RunScriptWithTimeout(pl, script, fileName, rgconst.BOT_INIT_TIME_BUDGET, timeoutBuffer)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
-		return WARNING_TOLERANCE + 1, err
+		return rgconst.WARNING_TOLERANCE + 1, err
 	}
-	for timeLeft < 0 && warningCount <= WARNING_TOLERANCE {
+	for timeLeft < 0 && warningCount <= rgconst.WARNING_TOLERANCE {
 		warningCount++
-		timeLeft += BOT_ACTION_TIME_BUDGET
+		timeLeft += rgconst.BOT_ACTION_TIME_BUDGET
 	}
 	err = lua.RunScript(pl, GetLoadActScript(), "[load act]")
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
-		return WARNING_TOLERANCE + 1, err
+		return rgconst.WARNING_TOLERANCE + 1, err
 	}
 	return warningCount, err
 }

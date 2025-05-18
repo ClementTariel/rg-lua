@@ -1,14 +1,13 @@
 package external
 
 import (
+	"github.com/ClementTariel/rg-lua/rgcore/rgentities"
 	"github.com/google/uuid"
-
-	"github.com/ClementTariel/rg-lua/rgcore"
 )
 
 type MatchmakerSaveMatchRequest struct {
-	MatchId uuid.UUID                 `json:"matchId"`
-	Game    []map[int]rgcore.BotState `json:"game"`
+	MatchId uuid.UUID                     `json:"matchId"`
+	Game    []map[int]rgentities.BotState `json:"game"`
 }
 
 type MatchmakerCancelMatchRequest struct {
@@ -17,6 +16,6 @@ type MatchmakerCancelMatchRequest struct {
 }
 
 type MatchmakerMS interface {
-	SaveMatch(matchId uuid.UUID, match []map[int]rgcore.BotState) error
+	SaveMatch(matchId uuid.UUID, match []map[int]rgentities.BotState) error
 	CancelMatch(matchId uuid.UUID, err error) error
 }

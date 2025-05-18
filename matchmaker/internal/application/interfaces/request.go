@@ -3,12 +3,12 @@ package interfaces
 import (
 	"github.com/google/uuid"
 
-	"github.com/ClementTariel/rg-lua/rgcore"
+	"github.com/ClementTariel/rg-lua/rgcore/rgentities"
 )
 
 type SaveMatchRequest struct {
-	MatchId uuid.UUID                 `json:"matchId"`
-	Game    []map[int]rgcore.BotState `json:"game"`
+	MatchId uuid.UUID                     `json:"matchId"`
+	Game    []map[int]rgentities.BotState `json:"game"`
 }
 
 type CancelMatchRequest struct {

@@ -8,7 +8,6 @@ import (
 
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/application/interfaces"
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/application/services"
-	"github.com/ClementTariel/rg-lua/rgcore/rgdebug"
 )
 
 type MatchmakerController struct {
@@ -49,8 +48,11 @@ func (mc *MatchmakerController) CancelMatch(c echo.Context) error {
 		fmt.Printf("Error: %v\n", err)
 		return c.String(http.StatusBadRequest, "Bad Request")
 	}
-	canceled := mc.matchmakerService.CancelMatch(cancelMatchRequest.MatchId, cancelMatchRequest.Error)
-	rgdebug.VPrintf("canceled : %v\n", canceled)
+	err = mc.matchmakerService.CancelMatch(cancelMatchRequest.MatchId, cancelMatchRequest.Error)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return c.String(http.StatusInternalServerError, "Internal Error")
+	}
 	return c.NoContent(http.StatusNoContent)
 }
 

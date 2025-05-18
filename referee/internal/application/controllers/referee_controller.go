@@ -8,7 +8,6 @@ import (
 
 	"github.com/ClementTariel/rg-lua/referee/internal/application/interfaces"
 	"github.com/ClementTariel/rg-lua/referee/internal/application/services"
-	"github.com/ClementTariel/rg-lua/rgcore/rgdebug"
 )
 
 type RefereeController struct {
@@ -27,14 +26,12 @@ func NewRefereeController(e *echo.Echo, refereeService services.RefereeService) 
 }
 
 func (rc *RefereeController) StopMatch(c echo.Context) error {
-	rgdebug.VPrintf("Forced to stop current match")
 	matchId, err := rc.refereeService.StopMatch()
 	if err != nil {
 		// TODO: handle that case properly
 		fmt.Printf("Error during match stop: %v\n", err)
 		return c.String(http.StatusInternalServerError, err.Error())
 	}
-	rgdebug.VPrintf("match stopped : %v\n", matchId)
 	stopResponse := &interfaces.StopResponse{
 		MatchId: matchId,
 	}
@@ -42,7 +39,6 @@ func (rc *RefereeController) StopMatch(c echo.Context) error {
 }
 
 func (rc *RefereeController) StartMatch(c echo.Context) error {
-	rgdebug.VPrintln("Start match")
 	var startRequest interfaces.StartRequest
 	err := c.Bind(&startRequest)
 	if err != nil {

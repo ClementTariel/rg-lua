@@ -8,7 +8,8 @@ import (
 	"net/http"
 
 	"github.com/ClementTariel/rg-lua/referee/internal/domain/external"
-	"github.com/ClementTariel/rg-lua/rgcore"
+	"github.com/ClementTariel/rg-lua/rgcore/rgconst"
+	"github.com/ClementTariel/rg-lua/rgcore/rgentities"
 )
 
 type PlayerMS struct {
@@ -69,22 +70,22 @@ func (PlayerMS) Init(isBlue bool, name string, script string) (int, error) {
 	})
 	resp, err := http.Post(fmt.Sprintf("http://%s:%d/init", host, port), "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
-		return rgcore.WARNING_TOLERANCE + 1, err
+		return rgconst.WARNING_TOLERANCE + 1, err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return rgcore.WARNING_TOLERANCE + 1, err
+		return rgconst.WARNING_TOLERANCE + 1, err
 	}
 	var initResponse external.PlayerInitResponse
 	err = json.Unmarshal(body, &initResponse)
 	if err != nil {
-		return rgcore.WARNING_TOLERANCE + 1, err
+		return rgconst.WARNING_TOLERANCE + 1, err
 	}
 	return initResponse.WarningCount, nil
 }
 
-func (PlayerMS) PlayTurn(isBlue bool, turn int, allies []rgcore.Bot, enemies []rgcore.Bot, warningCount int) (map[int]rgcore.Action, int, error) {
+func (PlayerMS) PlayTurn(isBlue bool, turn int, allies []rgentities.Bot, enemies []rgentities.Bot, warningCount int) (map[int]rgentities.Action, int, error) {
 	var port int
 	var host string
 	if isBlue {
@@ -103,16 +104,16 @@ func (PlayerMS) PlayTurn(isBlue bool, turn int, allies []rgcore.Bot, enemies []r
 	var playResponse external.PlayerPlayTurnResponse
 	resp, err := http.Post(fmt.Sprintf("http://%s:%d/play", host, port), "application/json", bytes.NewBuffer(postBody))
 	if err != nil {
-		return map[int]rgcore.Action{}, rgcore.WARNING_TOLERANCE + 1, err
+		return map[int]rgentities.Action{}, rgconst.WARNING_TOLERANCE + 1, err
 	}
 	defer resp.Body.Close()
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return map[int]rgcore.Action{}, rgcore.WARNING_TOLERANCE + 1, err
+		return map[int]rgentities.Action{}, rgconst.WARNING_TOLERANCE + 1, err
 	}
 	err = json.Unmarshal(body, &playResponse)
 	if err != nil {
-		return map[int]rgcore.Action{}, rgcore.WARNING_TOLERANCE + 1, err
+		return map[int]rgentities.Action{}, rgconst.WARNING_TOLERANCE + 1, err
 	}
 	return playResponse.Actions, playResponse.WarningCount, nil
 }

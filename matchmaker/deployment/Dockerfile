@@ -1,13 +1,11 @@
 FROM golang:alpine AS backend-builder
 # Add gcc for cgo
 RUN apk add build-base
-# Add lua5.3
-RUN apk add lua5.3 lua5.3-dev
-# Fix build issue with lua
-RUN (cd /usr/bin && ln -s lua5.3 lua)
-RUN (cd /usr/lib && ln -s lua5.3/liblua.so liblua5.3.so)
 
-COPY ./rgcore /rgcore
+COPY ./rgcore/rgconst /rgcore/rgconst
+COPY ./rgcore/rgentities /rgcore/rgentities
+COPY ./rgcore/rgutils /rgcore/rgutils
+
 COPY ./matchmaker /matchmaker
 
 WORKDIR /matchmaker

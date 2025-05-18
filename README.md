@@ -156,4 +156,4 @@ They are several waves in which robots spawn randomly, The team that have more r
 
 ## custom maps
 
-You can create your own custom map in `grid.c`. The map must be a square with all its edges set to `OBSTACLE` to avoid unexpected behaviours. If you just want to play with the size of the arena you can use `generate_grid.py`, otherwise you can write your own script to generate any map you want. Make sure to keep consistency between`GRID` and `GRID_SIZE`, and between `SPAWN_LOCATIONS` and `SPAWN_LEN`.
+You can create your own custom map in `grid.c`. The map must be a square with all its edges set to `OBSTACLE` to avoid unexpected behaviours. If you just want to play with the size of the arena you can use `generate_grid.py`, otherwise you can write your own script to generate any map you want. Make sure to keep consistency between `GRID` and `GRID_SIZE`, and between `SPAWN_LOCATIONS` and `SPAWN_LEN`.

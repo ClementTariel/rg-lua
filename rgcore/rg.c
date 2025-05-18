@@ -1,9 +1,10 @@
 #include <unistd.h>
 #include <math.h>
+#include "rgentities/rgentities.h"
+#include "rgconst/rgconst.h"
 #include "rgdebug/debug.h"
 #include "rg.h"
 #include "lua/luaBridge.c"
-#include "grid/grid.c"
 
 int GetActionWithTimeoutBridge(void *pl, void *paction, int bot_id, int timeout)
 {
@@ -455,7 +456,7 @@ int rg_locs_around_in_lua(lua_State *pl)
         int loc_type = OBSTACLE;
         if (loc_x > 0 && loc_x < GRID_SIZE && loc_y > 0 && loc_y < GRID_SIZE)
         {
-            loc_type = GRID[loc_x][loc_y];
+            loc_type = GRID[loc_x * GRID_SIZE + loc_y];
         }
         bool filtered_out = false;
         if (loc_type == NORMAL)
@@ -511,7 +512,7 @@ int rg_loc_type_in_lua(lua_State *pl)
     }
     else
     {
-        lua_pushinteger(pl, GRID[x][y]);
+        lua_pushinteger(pl, GRID[x * GRID_SIZE + y]);
     }
     return 1;
 }

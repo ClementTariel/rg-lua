@@ -46,8 +46,6 @@ services:
     build:
       context: ../
       dockerfile: ./referee/deployment/Dockerfile
-    # TODO: WIP enable/disable depending on env var for dev/prod
-    command: " -v"
     ports:
       - 3333:3333
     depends_on:
@@ -59,8 +57,6 @@ services:
     build:
       context: ../
       dockerfile: ./matchmaker/deployment/Dockerfile
-    # TODO: WIP enable/disable depending on env var for dev/prod
-    command: " -v"
     ports:
       - 4444:4444
     depends_on:

@@ -13,28 +13,29 @@ import (
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/domain/external"
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/domain/repositories"
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/infrastructure/rest"
-	"github.com/ClementTariel/rg-lua/rgcore"
-	"github.com/ClementTariel/rg-lua/rgcore/rgdebug"
+	"github.com/ClementTariel/rg-lua/rgcore/rgconst"
+	"github.com/ClementTariel/rg-lua/rgcore/rgentities"
+	"github.com/ClementTariel/rg-lua/rgcore/rgutils"
 )
 
 const MATCH_TIMEOUT = 2 *
 	// Convert from nanoseconds to milliseconds
 	1000000 *
 	// Init time
-	((rgcore.BOT_INIT_TIME_BUDGET *
+	((rgconst.BOT_INIT_TIME_BUDGET *
 		// number of bots per wave
-		2 * rgcore.SPAWN_COUNT *
+		2 * rgconst.SPAWN_COUNT *
 		// number of waves
-		rgcore.MAX_TURN / rgcore.SPAWN_DELAY) +
+		rgconst.MAX_TURN / rgconst.SPAWN_DELAY) +
 
 		// Action time
-		(rgcore.BOT_ACTION_TIME_BUDGET *
+		(rgconst.BOT_ACTION_TIME_BUDGET *
 			// duration of a wave
-			rgcore.SPAWN_DELAY *
+			rgconst.SPAWN_DELAY *
 			// sum of the max number of bots per wave
-			((rgcore.MAX_TURN / rgcore.SPAWN_DELAY) *
-				((rgcore.MAX_TURN / rgcore.SPAWN_DELAY) + 1) / 2) *
-			2 * rgcore.SPAWN_COUNT))
+			((rgconst.MAX_TURN / rgconst.SPAWN_DELAY) *
+				((rgconst.MAX_TURN / rgconst.SPAWN_DELAY) + 1) / 2) *
+			2 * rgconst.SPAWN_COUNT))
 
 type MatchmakerService struct {
 	botRepo       repositories.BotRepository
@@ -57,12 +58,12 @@ func NewMatchmakerService(botRepo repositories.BotRepository, matchRepo reposito
 	}
 }
 
-func (s *MatchmakerService) printGrid(currentGameState map[int]rgcore.BotState) {
+func (s *MatchmakerService) printGrid(currentGameState map[int]rgentities.BotState) {
 	gameStateAsStr := ""
-	for i := 0; i < rgcore.GRID_SIZE; i++ {
-		for j := 0; j < rgcore.GRID_SIZE; j++ {
+	for i := 0; i < rgconst.GRID_SIZE; i++ {
+		for j := 0; j < rgconst.GRID_SIZE; j++ {
 			tile := " "
-			if rgcore.GetLocationType(j, i) == rgcore.OBSTACLE {
+			if rgutils.GetLocationType(j, i) == rgconst.OBSTACLE {
 				tile = "#"
 			}
 			gameStateAsStr += tile + " "
@@ -74,12 +75,12 @@ func (s *MatchmakerService) printGrid(currentGameState map[int]rgcore.BotState) 
 	for _, botState := range currentGameState {
 		tile := "O"
 		blueCount += 1
-		if botState.Bot.PlayerId == rgcore.RED_ID {
+		if botState.Bot.PlayerId == rgconst.RED_ID {
 			tile = "X"
 			blueCount -= 1
 			redCount += 1
 		}
-		tileIndex := ((2*rgcore.GRID_SIZE+1)*botState.Bot.Y + (2 * botState.Bot.X))
+		tileIndex := ((2*rgconst.GRID_SIZE+1)*botState.Bot.Y + (2 * botState.Bot.X))
 		gameStateAsStr = gameStateAsStr[:tileIndex] + tile + gameStateAsStr[tileIndex+1:]
 	}
 	gameStateAsStr = strings.ReplaceAll(gameStateAsStr, "# ", "\033[40m  \033[47m")
@@ -90,8 +91,7 @@ func (s *MatchmakerService) printGrid(currentGameState map[int]rgcore.BotState) 
 	fmt.Printf("\033[47m%s\033[0m\n", gameStateAsStr)
 }
 
-func (s *MatchmakerService) SaveMatch(matchId uuid.UUID, game []map[int]rgcore.BotState) error {
-	rgdebug.VPrintf("save %v\n", matchId)
+func (s *MatchmakerService) SaveMatch(matchId uuid.UUID, game []map[int]rgentities.BotState) error {
 	for i, state := range game {
 		fmt.Printf("turn %d\n", i+1)
 		s.printGrid(state)
@@ -99,7 +99,7 @@ func (s *MatchmakerService) SaveMatch(matchId uuid.UUID, game []map[int]rgcore.B
 	score1 := 0
 	score2 := 0
 	for _, botState := range game[len(game)-1] {
-		if botState.Bot.PlayerId == rgcore.BLUE_ID {
+		if botState.Bot.PlayerId == rgconst.BLUE_ID {
 			score1 += 1
 		} else {
 			score2 += 1
@@ -126,16 +126,15 @@ func (s *MatchmakerService) SaveMatch(matchId uuid.UUID, game []map[int]rgcore.B
 		Score2:   score2,
 	})
 	if err != nil {
-		rgdebug.VPrintf("Error: %v\n", err)
+		fmt.Printf("Error: %v\n", err)
 	}
 	go s.StartDebouncedMatch()
 	return err
 }
 
-func (s *MatchmakerService) CancelMatch(matchId uuid.UUID, err error) bool {
-	rgdebug.VPrintf("cancel %v because of %v\n", matchId, err)
+func (s *MatchmakerService) CancelMatch(matchId uuid.UUID, err error) error {
 	// TODO: cancel match
-	return false
+	return nil
 }
 
 func (s *MatchmakerService) KillMatch() error {
@@ -148,10 +147,8 @@ func (s *MatchmakerService) KillMatch() error {
 }
 
 func (s *MatchmakerService) AddMatchToQueue(blueName string, redName string) (bool, error) {
-	rgdebug.VPrintf("Add match to queue: %s - %s\n", blueName, redName)
 	// TODO: better system to handle queue size and check on elements added
 	if s.matchQueue.IsFull() {
-		rgdebug.VPrintln("Queue is full")
 		return false, nil
 	}
 	blueId, err := s.botRepo.GetIdFromName(blueName)
@@ -177,16 +174,13 @@ func (s *MatchmakerService) AddMatchToQueue(blueName string, redName string) (bo
 func (s *MatchmakerService) StartMatch(pendingMatch entities.PendingMatch) error {
 	s.currentMatch = pendingMatch
 	s.isRunning = true
-	rgdebug.VPrintln("Match started, waiting for the result...")
 	return s.refereeMS.StartMatch(pendingMatch.Id, pendingMatch.BotId1, pendingMatch.BotId2)
 }
 
 func (s *MatchmakerService) StartDebouncedMatch() error {
-	rgdebug.VPrintln("Debounced start...")
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.isRunning {
-		rgdebug.VPrintln("Abort, already started")
 		return nil
 	}
 	if s.debounceTimer != nil {
@@ -194,7 +188,6 @@ func (s *MatchmakerService) StartDebouncedMatch() error {
 	}
 	pendingMatch, err := s.matchQueue.Pop()
 	if err != nil {
-		rgdebug.VPrintf("Abort: %v\n", err)
 		return err
 	}
 	s.debounceTimer = time.AfterFunc(MATCH_TIMEOUT, func() {

@@ -7,7 +7,9 @@ import (
 
 	"github.com/ClementTariel/rg-lua/rgcore"
 	"github.com/ClementTariel/rg-lua/rgcore/lua"
+	"github.com/ClementTariel/rg-lua/rgcore/rgconst"
 	"github.com/ClementTariel/rg-lua/rgcore/rgdebug"
+	"github.com/ClementTariel/rg-lua/rgcore/rgentities"
 	"github.com/ClementTariel/rg-lua/rgcore/rgerrors"
 )
 
@@ -53,7 +55,7 @@ func (s *PlayerService) InitNewMatch(name string, script string) (int, error) {
 	err := s.CreateState()
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
-		return rgcore.WARNING_TOLERANCE + 1, err
+		return rgconst.WARNING_TOLERANCE + 1, err
 	}
 	lua.PushFunction(s.L, rgdebug.GetPrintInLuaFunctionPointer(), "print")
 	warningCount, err := rgcore.InitRG(s.L, script, name)
@@ -69,7 +71,7 @@ func (s *PlayerService) ResetGame(turn int) error {
 	return lua.RunScript(s.L, rgcore.GetResetScript(turn), "[reset game data]")
 }
 
-func (s *PlayerService) LoadGameBot(bot rgcore.Bot) error {
+func (s *PlayerService) LoadGameBot(bot rgentities.Bot) error {
 	botId := "nil"
 	if (bot.Id) > 0 {
 		botId = fmt.Sprintf("%d", bot.Id)
@@ -83,63 +85,61 @@ func (s *PlayerService) LoadGameBot(bot rgcore.Bot) error {
 		fmt.Sprintf("[loading game data - %s]", botDescription))
 }
 
-func (s *PlayerService) LoadSelf(bot rgcore.Bot) error {
+func (s *PlayerService) LoadSelf(bot rgentities.Bot) error {
 	return lua.RunScript(s.L,
 		rgcore.GetLoadSelfScript(bot.X, bot.Y, bot.Hp, bot.PlayerId, bot.Id),
 		fmt.Sprintf("[loading self data - bot %d]", bot.Id))
 }
 
-func (s *PlayerService) PlayTurn(turn int, allies []rgcore.Bot, enemies []rgcore.Bot, warningCount int) (map[int]rgcore.Action, int) {
+func (s *PlayerService) PlayTurn(turn int, allies []rgentities.Bot, enemies []rgentities.Bot, warningCount int) (map[int]rgentities.Action, int) {
 	err := s.ResetGame(turn)
 	if err != nil {
 		fmt.Printf("error when reseting game: %v\n", err)
-		warningCount = rgcore.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
+		warningCount = rgconst.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
 	}
-	actions := map[int]rgcore.Action{}
-	if !(warningCount > rgcore.WARNING_TOLERANCE) {
+	actions := map[int]rgentities.Action{}
+	if !(warningCount > rgconst.WARNING_TOLERANCE) {
 		for _, bot := range append(allies, enemies...) {
 			err = s.LoadGameBot(bot)
 			if err != nil {
 				fmt.Printf("error when loading game bot %v: %v\n", bot, err)
-				warningCount = rgcore.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
+				warningCount = rgconst.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
 				break
 			}
 		}
 	}
 	for _, bot := range allies {
-		actions[bot.Id] = rgcore.Action{
-			ActionType: rgcore.SUICIDE,
+		actions[bot.Id] = rgentities.Action{
+			ActionType: rgconst.SUICIDE,
 			X:          -1,
 			Y:          -1,
 		}
-		if warningCount > rgcore.WARNING_TOLERANCE {
+		if warningCount > rgconst.WARNING_TOLERANCE {
 			continue
 		}
 		err = s.LoadSelf(bot)
 		if err != nil {
 			fmt.Printf("error when loading self (bot %v) %v\n", bot, err)
-			warningCount = rgcore.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
+			warningCount = rgconst.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
 			continue
 		}
 		action, err := rgcore.GetActionWithTimeout(s.L, bot)
 		switch true {
 		case errors.Is(err, rgerrors.TIMEOUT_ERROR):
 			warningCount++
-			if warningCount > rgcore.WARNING_TOLERANCE {
+			if warningCount > rgconst.WARNING_TOLERANCE {
 				break
 			}
 			fallthrough
 		case errors.Is(err, rgerrors.INVALID_MOVE_ERROR):
-			action.ActionType = rgcore.GUARD
+			action.ActionType = rgconst.GUARD
 			action.X = -1
 			action.Y = -1
 		case errors.Unwrap(err) != nil:
 			fmt.Printf("disqualified because of %v\n", err)
-			warningCount = rgcore.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
-		default:
-			rgdebug.VPrintf("bot %d (%v) act (%d,%d,%d), %v\n", bot.Id, bot, action.ActionType, action.X, action.Y, err)
+			warningCount = rgconst.WARNING_TOLERANCE + 1 // error => instantly triggers all warnings
 		}
-		if warningCount > rgcore.WARNING_TOLERANCE {
+		if warningCount > rgconst.WARNING_TOLERANCE {
 			continue
 		}
 		actions[bot.Id] = action

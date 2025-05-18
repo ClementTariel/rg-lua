@@ -1,14 +1,14 @@
 package interfaces
 
 import (
-	"github.com/ClementTariel/rg-lua/rgcore"
+	"github.com/ClementTariel/rg-lua/rgcore/rgentities"
 )
 
 type PlayRequest struct {
-	Turn         int          `json:"turn"`
-	Allies       []rgcore.Bot `json:"allies"`
-	Enemies      []rgcore.Bot `json:"enemies"`
-	WarningCount int          `json:"warningCount"`
+	Turn         int              `json:"turn"`
+	Allies       []rgentities.Bot `json:"allies"`
+	Enemies      []rgentities.Bot `json:"enemies"`
+	WarningCount int              `json:"warningCount"`
 }
 
 type InitRequest struct {

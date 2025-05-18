@@ -3,11 +3,7 @@ module github.com/ClementTariel/rg-lua/player
 go 1.21.4
 
 require (
-	github.com/ClementTariel/rg-lua/rgcore v0.0.0
 	github.com/labstack/echo v3.3.10+incompatible
-)
-
-require (
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -19,4 +15,21 @@ require (
 	golang.org/x/text v0.14.0 // indirect
 )
 
-replace github.com/ClementTariel/rg-lua/rgcore v0.0.0 => ../rgcore
+require (
+	github.com/ClementTariel/rg-lua/rgcore v0.0.0
+	github.com/ClementTariel/rg-lua/rgcore/rgconst v0.0.0
+	github.com/ClementTariel/rg-lua/rgcore/rgdebug v0.0.0
+	github.com/ClementTariel/rg-lua/rgcore/rgentities v0.0.0
+	github.com/ClementTariel/rg-lua/rgcore/rgerrors v0.0.0
+)
+
+require github.com/ClementTariel/rg-lua/rgcore/rgutils v0.0.0 // indirect
+
+replace (
+	github.com/ClementTariel/rg-lua/rgcore v0.0.0 => ../rgcore
+	github.com/ClementTariel/rg-lua/rgcore/rgconst v0.0.0 => ../rgcore/rgconst
+	github.com/ClementTariel/rg-lua/rgcore/rgdebug v0.0.0 => ../rgcore/rgdebug
+	github.com/ClementTariel/rg-lua/rgcore/rgentities v0.0.0 => ../rgcore/rgentities
+	github.com/ClementTariel/rg-lua/rgcore/rgerrors v0.0.0 => ../rgcore/rgerrors
+	github.com/ClementTariel/rg-lua/rgcore/rgutils v0.0.0 => ../rgcore/rgutils
+)

@@ -11,8 +11,9 @@ import (
 	"github.com/ClementTariel/rg-lua/referee/internal/domain/external"
 	"github.com/ClementTariel/rg-lua/referee/internal/domain/repositories"
 	"github.com/ClementTariel/rg-lua/referee/internal/infrastructure/rest"
-	"github.com/ClementTariel/rg-lua/rgcore"
-	"github.com/ClementTariel/rg-lua/rgcore/rgdebug"
+	"github.com/ClementTariel/rg-lua/rgcore/rgconst"
+	"github.com/ClementTariel/rg-lua/rgcore/rgentities"
+	"github.com/ClementTariel/rg-lua/rgcore/rgutils"
 )
 
 type RefereeService struct {
@@ -35,7 +36,6 @@ func NewRefereeService(botRepo repositories.BotRepository) RefereeService {
 func (s *RefereeService) StopMatch() (uuid.UUID, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	rgdebug.VPrintln("Stop match")
 	matchId := uuid.Nil
 	var err error
 	if s.matchId != uuid.Nil {
@@ -66,9 +66,6 @@ func (s *RefereeService) StopMatch() (uuid.UUID, error) {
 			fmt.Printf("An Error Occured : %v\n", err)
 		}
 		s.matchId = uuid.Nil
-		rgdebug.VPrintf("Match stopped : %v\n", matchId)
-	} else {
-		rgdebug.VPrintln("No match to stop")
 	}
 	return matchId, err
 }
@@ -111,7 +108,6 @@ func (s *RefereeService) StartMatch(matchId uuid.UUID, blueId uuid.UUID, redId u
 			fmt.Printf("Error: %v\n", matchErr)
 			return
 		}
-		rgdebug.VPrintln("Save match")
 		// TODO: error handling system to mae sure the match has been saved
 		matchErr = s.matchmakerMS.SaveMatch(s.matchId, match)
 		fmt.Printf("Error: %v\n", matchErr)
@@ -153,19 +149,19 @@ func (s *RefereeService) initMatch(blueName string, blueScript string, redName s
 func (s *RefereeService) initPlayer(isBlue bool, name string, script string) (int, error) {
 	warningCount, err := s.playerMS.Init(isBlue, name, script)
 	if err != nil {
-		warningCount = rgcore.WARNING_TOLERANCE + 1
+		warningCount = rgconst.WARNING_TOLERANCE + 1
 	}
 	return warningCount, err
 }
 
-func (s *RefereeService) playTurn(playerId int, turn int, allBots []rgcore.Bot, previousWarningCount int) (map[int]rgcore.Action, int) {
-	actions, warningCount, err := s.playerMS.PlayTurn(playerId == rgcore.BLUE_ID, turn, rgcore.Allies(playerId, allBots), rgcore.Enemies(playerId, allBots), previousWarningCount)
+func (s *RefereeService) playTurn(playerId int, turn int, allBots []rgentities.Bot, previousWarningCount int) (map[int]rgentities.Action, int) {
+	actions, warningCount, err := s.playerMS.PlayTurn(playerId == rgconst.BLUE_ID, turn, rgutils.Allies(playerId, allBots), rgutils.Enemies(playerId, allBots), previousWarningCount)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
-		warningCount = rgcore.WARNING_TOLERANCE + 1
-		for _, bot := range rgcore.Allies(playerId, allBots) {
-			actions[bot.Id] = rgcore.Action{
-				ActionType: rgcore.SUICIDE,
+		warningCount = rgconst.WARNING_TOLERANCE + 1
+		for _, bot := range rgutils.Allies(playerId, allBots) {
+			actions[bot.Id] = rgentities.Action{
+				ActionType: rgconst.SUICIDE,
 				X:          -1,
 				Y:          -1,
 			}
@@ -174,22 +170,22 @@ func (s *RefereeService) playTurn(playerId int, turn int, allBots []rgcore.Bot, 
 	return actions, warningCount
 }
 
-func (s *RefereeService) generateSpawnLocations() ([]rgcore.Location, error) {
+func (s *RefereeService) generateSpawnLocations() ([]rgentities.Location, error) {
 	var err error
-	selectedSpawnLocations := []rgcore.Location{}
-	for i := 0; i < rgcore.SPAWN_COUNT; i++ {
+	selectedSpawnLocations := []rgentities.Location{}
+	for i := 0; i < rgconst.SPAWN_COUNT; i++ {
 		validSpawn := false
-		var newSpawn rgcore.Location
+		var newSpawn rgentities.Location
 		for !validSpawn {
-			spawnIndex := rand.Intn(rgcore.SPAWN_LEN)
-			newSpawn, err = rgcore.GetSpawnLocation(spawnIndex)
+			spawnIndex := rand.Intn(rgconst.SPAWN_LEN)
+			newSpawn, err = rgutils.GetSpawnLocation(spawnIndex)
 			if err != nil {
-				return []rgcore.Location{}, err
+				return []rgentities.Location{}, err
 			}
 			validSpawn = true
 			for _, spawn := range selectedSpawnLocations {
 				if (spawn == newSpawn) ||
-					(rgcore.Location{X: (rgcore.GRID_SIZE - 1 - spawn.X), Y: (rgcore.GRID_SIZE - 1 - spawn.Y)} == newSpawn) {
+					(rgentities.Location{X: (rgconst.GRID_SIZE - 1 - spawn.X), Y: (rgconst.GRID_SIZE - 1 - spawn.Y)} == newSpawn) {
 					validSpawn = false
 					break
 				}
@@ -200,11 +196,11 @@ func (s *RefereeService) generateSpawnLocations() ([]rgcore.Location, error) {
 	return selectedSpawnLocations, err
 }
 
-func (s *RefereeService) claimLocation(loc rgcore.Location, bot rgcore.Bot, claimedMoves map[rgcore.Location][]rgcore.Bot) {
-	botLoc := rgcore.Location{X: bot.X, Y: bot.Y}
+func (s *RefereeService) claimLocation(loc rgentities.Location, bot rgentities.Bot, claimedMoves map[rgentities.Location][]rgentities.Bot) {
+	botLoc := rgentities.Location{X: bot.X, Y: bot.Y}
 	otherBots, ok := claimedMoves[loc]
 	if !ok {
-		otherBots = []rgcore.Bot{}
+		otherBots = []rgentities.Bot{}
 	}
 	// Check if the bot has already claimed this location (base case)
 	for _, otherBot := range otherBots {
@@ -221,7 +217,7 @@ func (s *RefereeService) claimLocation(loc rgcore.Location, bot rgcore.Bot, clai
 			return
 		}
 		for _, potentialSwapBot := range potentialSwapBots {
-			potentialSwapBotLoc := rgcore.Location{X: potentialSwapBot.X, Y: potentialSwapBot.Y}
+			potentialSwapBotLoc := rgentities.Location{X: potentialSwapBot.X, Y: potentialSwapBot.Y}
 			if bot.Id != potentialSwapBot.Id && potentialSwapBotLoc == loc {
 				// - bot wants to move from botLoc to potentialSwapBotLoc
 				// - potentialSwapBot != bot
@@ -237,24 +233,24 @@ func (s *RefereeService) claimLocation(loc rgcore.Location, bot rgcore.Bot, clai
 	}
 	botsInConflict := claimedMoves[loc]
 	// Deep copy to avoid unexpected behaviours
-	botsInConflict = append([]rgcore.Bot{}, botsInConflict...)
+	botsInConflict = append([]rgentities.Bot{}, botsInConflict...)
 	for _, otherBot := range botsInConflict {
 		// Bots involved in the conflict cannot move
 		// => they stay in place and claim their current location
-		otherBotLoc := rgcore.Location{X: otherBot.X, Y: otherBot.Y}
+		otherBotLoc := rgentities.Location{X: otherBot.X, Y: otherBot.Y}
 		s.claimLocation(otherBotLoc, otherBot, claimedMoves)
 	}
 }
 
-func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([]map[int]rgcore.BotState, error) {
-	game := []map[int]rgcore.BotState{}
-	allBots := []rgcore.Bot{}
+func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([]map[int]rgentities.BotState, error) {
+	game := []map[int]rgentities.BotState{}
+	allBots := []rgentities.Bot{}
 	lastId := 0
-	for turn := 0; turn < rgcore.MAX_TURN; turn++ {
+	for turn := 0; turn < rgconst.MAX_TURN; turn++ {
 		// Spawn
-		if turn%rgcore.SPAWN_DELAY == 0 {
+		if turn%rgconst.SPAWN_DELAY == 0 {
 			// Kill bots on spawn tiles
-			allBots = rgcore.FilterOutBotsOnSpawn(allBots)
+			allBots = rgutils.FilterOutBotsOnSpawn(allBots)
 			// Generate random spawns
 			newSpawnLocations, err := s.generateSpawnLocations()
 			if err != nil {
@@ -262,44 +258,44 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 			}
 			for _, loc := range newSpawnLocations {
 				lastId += 1
-				allBots = append(allBots, rgcore.Bot{
+				allBots = append(allBots, rgentities.Bot{
 					X:        loc.X,
 					Y:        loc.Y,
-					Hp:       rgcore.MAX_HP,
+					Hp:       rgconst.MAX_HP,
 					Id:       lastId,
-					PlayerId: rgcore.BLUE_ID,
+					PlayerId: rgconst.BLUE_ID,
 				})
 				lastId += 1
-				allBots = append(allBots, rgcore.Bot{
-					X:        rgcore.GRID_SIZE - 1 - loc.X,
-					Y:        rgcore.GRID_SIZE - 1 - loc.Y,
-					Hp:       rgcore.MAX_HP,
+				allBots = append(allBots, rgentities.Bot{
+					X:        rgconst.GRID_SIZE - 1 - loc.X,
+					Y:        rgconst.GRID_SIZE - 1 - loc.Y,
+					Hp:       rgconst.MAX_HP,
 					Id:       lastId,
-					PlayerId: rgcore.RED_ID,
+					PlayerId: rgconst.RED_ID,
 				})
 			}
 		}
 
 		// Get actions
-		var blueActions map[int]rgcore.Action
-		var redActions map[int]rgcore.Action
+		var blueActions map[int]rgentities.Action
+		var redActions map[int]rgentities.Action
 		wg := sync.WaitGroup{}
 		wg.Add(2)
 		go func() {
-			blueActions, blueWarningCount = s.playTurn(rgcore.BLUE_ID, turn, allBots, blueWarningCount)
+			blueActions, blueWarningCount = s.playTurn(rgconst.BLUE_ID, turn, allBots, blueWarningCount)
 			wg.Done()
 		}()
 		go func() {
-			redActions, redWarningCount = s.playTurn(rgcore.RED_ID, turn, allBots, redWarningCount)
+			redActions, redWarningCount = s.playTurn(rgconst.RED_ID, turn, allBots, redWarningCount)
 			wg.Done()
 		}()
 		wg.Wait()
 
 		// Add actions to game state
-		currentGameState := map[int]rgcore.BotState{}
+		currentGameState := map[int]rgentities.BotState{}
 		for _, bot := range allBots {
-			botState := rgcore.BotState{Bot: bot}
-			if bot.PlayerId == rgcore.BLUE_ID {
+			botState := rgentities.BotState{Bot: bot}
+			if bot.PlayerId == rgconst.BLUE_ID {
 				botState.Action = blueActions[bot.Id]
 			} else {
 				botState.Action = redActions[bot.Id]
@@ -310,25 +306,25 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 
 		// Apply actions
 		for id, botState := range game[len(game)-1] {
-			nextLoc := rgcore.Location{X: botState.Action.X, Y: botState.Action.Y}
-			if (botState.Action.ActionType == rgcore.MOVE || botState.Action.ActionType == rgcore.ATTACK) &&
-				rgcore.GetLocationType(nextLoc.X, nextLoc.Y) == rgcore.OBSTACLE {
-				guardAction := rgcore.Action{ActionType: rgcore.GUARD, X: botState.Bot.X, Y: botState.Bot.Y}
+			nextLoc := rgentities.Location{X: botState.Action.X, Y: botState.Action.Y}
+			if (botState.Action.ActionType == rgconst.MOVE || botState.Action.ActionType == rgconst.ATTACK) &&
+				rgutils.GetLocationType(nextLoc.X, nextLoc.Y) == rgconst.OBSTACLE {
+				guardAction := rgentities.Action{ActionType: rgconst.GUARD, X: botState.Bot.X, Y: botState.Bot.Y}
 				botState.Action = guardAction
 				game[len(game)-1][id] = botState
 			}
 		}
-		claimedMoves := map[rgcore.Location][]rgcore.Bot{}
+		claimedMoves := map[rgentities.Location][]rgentities.Bot{}
 		for _, botState := range game[len(game)-1] {
-			var loc rgcore.Location
-			if botState.Action.ActionType == rgcore.MOVE {
-				loc = rgcore.Location{X: botState.Action.X, Y: botState.Action.Y}
+			var loc rgentities.Location
+			if botState.Action.ActionType == rgconst.MOVE {
+				loc = rgentities.Location{X: botState.Action.X, Y: botState.Action.Y}
 			} else {
-				loc = rgcore.Location{X: botState.Bot.X, Y: botState.Bot.Y}
+				loc = rgentities.Location{X: botState.Bot.X, Y: botState.Bot.Y}
 			}
 			s.claimLocation(loc, botState.Bot, claimedMoves)
 		}
-		updatedBots := map[int]rgcore.Bot{}
+		updatedBots := map[int]rgentities.Bot{}
 		// Move bots
 		for loc, bots := range claimedMoves {
 			if len(bots) == 1 {
@@ -375,57 +371,57 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 		// Deal collision damage
 		for botId, collisions := range collisions {
 			updatedBot := updatedBots[botId]
-			if game[len(game)-1][updatedBot.Id].Action.ActionType == rgcore.GUARD {
+			if game[len(game)-1][updatedBot.Id].Action.ActionType == rgconst.GUARD {
 				continue
 			}
-			updatedBot.Hp -= rgcore.COLLISION_DAMAGE * len(collisions)
+			updatedBot.Hp -= rgconst.COLLISION_DAMAGE * len(collisions)
 			updatedBots[updatedBot.Id] = updatedBot
 		}
 		// Attack & Suicide damage
-		damage := map[int]map[rgcore.Location]int{}
-		damage[rgcore.BLUE_ID] = map[rgcore.Location]int{}
-		damage[rgcore.RED_ID] = map[rgcore.Location]int{}
+		damage := map[int]map[rgentities.Location]int{}
+		damage[rgconst.BLUE_ID] = map[rgentities.Location]int{}
+		damage[rgconst.RED_ID] = map[rgentities.Location]int{}
 		for _, botState := range game[len(game)-1] {
-			if botState.Action.ActionType == rgcore.ATTACK {
-				loc := rgcore.Location{X: botState.Action.X, Y: botState.Action.Y}
+			if botState.Action.ActionType == rgconst.ATTACK {
+				loc := rgentities.Location{X: botState.Action.X, Y: botState.Action.Y}
 				currentDamage, ok := damage[botState.Bot.PlayerId][loc]
 				if !ok {
 					currentDamage = 0
 				}
 				damage[botState.Bot.PlayerId][loc] = currentDamage +
-					rgcore.ATTACK_DAMAGE_MIN +
-					rand.Intn(rgcore.ATTACK_DAMAGE_MAX+1-rgcore.ATTACK_DAMAGE_MIN)
-			} else if botState.Action.ActionType == rgcore.SUICIDE {
+					rgconst.ATTACK_DAMAGE_MIN +
+					rand.Intn(rgconst.ATTACK_DAMAGE_MAX+1-rgconst.ATTACK_DAMAGE_MIN)
+			} else if botState.Action.ActionType == rgconst.SUICIDE {
 				updatedBot := updatedBots[botState.Bot.Id]
 				updatedBot.Hp = 0
 				updatedBots[updatedBot.Id] = updatedBot
 				for i := 0; i < 4; i++ {
 					x := botState.Bot.X + (i%2)*(i-2)
 					y := botState.Bot.Y + ((i+1)%2)*(i-1)
-					loc := rgcore.Location{X: x, Y: y}
+					loc := rgentities.Location{X: x, Y: y}
 					currentDamage, ok := damage[botState.Bot.PlayerId][loc]
 					if !ok {
 						currentDamage = 0
 					}
-					damage[botState.Bot.PlayerId][loc] = currentDamage + rgcore.SUICIDE_DAMAGE
+					damage[botState.Bot.PlayerId][loc] = currentDamage + rgconst.SUICIDE_DAMAGE
 				}
 
 			}
 		}
 		for _, botState := range game[len(game)-1] {
-			loc := rgcore.Location{X: botState.Bot.X, Y: botState.Bot.Y}
+			loc := rgentities.Location{X: botState.Bot.X, Y: botState.Bot.Y}
 			totalDamage := 0
 			ok := false
-			if botState.Bot.PlayerId == rgcore.BLUE_ID {
-				totalDamage, ok = damage[rgcore.RED_ID][loc]
+			if botState.Bot.PlayerId == rgconst.BLUE_ID {
+				totalDamage, ok = damage[rgconst.RED_ID][loc]
 			} else {
-				totalDamage, ok = damage[rgcore.BLUE_ID][loc]
+				totalDamage, ok = damage[rgconst.BLUE_ID][loc]
 			}
 			if !ok {
 				continue
 			}
 			updatedBot := updatedBots[botState.Bot.Id]
-			if botState.Action.ActionType == rgcore.GUARD {
+			if botState.Action.ActionType == rgconst.GUARD {
 				updatedBot.Hp -= totalDamage / 2
 			} else {
 				updatedBot.Hp -= totalDamage
@@ -433,13 +429,13 @@ func (s *RefereeService) playMatch(blueWarningCount int, redWarningCount int) ([
 			updatedBots[updatedBot.Id] = updatedBot
 		}
 		// Remove dead bots
-		allBots = rgcore.FilterOutDeadBots(updatedBots)
+		allBots = rgutils.FilterOutDeadBots(updatedBots)
 	}
 	// Add final state with all robot guarding
-	currentGameState := map[int]rgcore.BotState{}
+	currentGameState := map[int]rgentities.BotState{}
 	for _, bot := range allBots {
-		botState := rgcore.BotState{Bot: bot}
-		botState.Action = rgcore.Action{ActionType: rgcore.GUARD, X: -1, Y: -1}
+		botState := rgentities.BotState{Bot: bot}
+		botState.Action = rgentities.Action{ActionType: rgconst.GUARD, X: -1, Y: -1}
 		currentGameState[bot.Id] = botState
 	}
 	// TODO: kill players states (call "/kill")
