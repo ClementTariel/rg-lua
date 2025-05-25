@@ -8,13 +8,13 @@ services:
     build:
       context: ../
       dockerfile: ./deployment/Dockerfile
+    expose:
+      - "5432"
     environment:
       POSTGRES_PASSWORD: postgres
       POSTGRES_USERNAME: postgres
     volumes:
       - rglua_database_internals:/var/lib/postgresql/data
-    ports:
-      - 5432:5432
 
   # TODO: WIP enable/disable depending on env var for dev/prod
   adminer:
@@ -29,25 +29,25 @@ services:
       dockerfile: ./player/deployment/Dockerfile
       args:
         - PORT=1111
+    expose:
+      - "1111"
     command: " -p 1111"
-    ports:
-      - 1111:1111
   red_player:
     build:
       context: ../
       dockerfile: ./player/deployment/Dockerfile
       args:
         - PORT=2222
+    expose:
+      - "2222"
     command: " -p 2222"
-    ports:
-      - 2222:2222
 
   referee:
     build:
       context: ../
       dockerfile: ./referee/deployment/Dockerfile
-    ports:
-      - 3333:3333
+    expose:
+      - "3333"
     depends_on:
       - rglua_db
       - blue_player
@@ -57,9 +57,19 @@ services:
     build:
       context: ../
       dockerfile: ./matchmaker/deployment/Dockerfile
-    ports:
-      - 4444:4444
+    expose:
+      - "4444"
     depends_on:
       - rglua_db
       - referee
+
+  bouncer:
+    build:
+      context: ../
+      dockerfile: ./bouncer/deployment/Dockerfile
+    ports:
+      - 5555:5555
+    depends_on:
+      - rglua_db
+      - matchmaker
 
