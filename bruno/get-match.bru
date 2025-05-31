@@ -1,0 +1,16 @@
+meta {
+  name: get-match
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{baseUrl}}:5555/match/{{id}}
+  body: json
+  auth: none
+}
+
+vars:pre-request {
+  baseUrl: http://localhost
+  id: test
+}

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"strings"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/parquet-go/parquet-go/compress/zstd"
 
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/domain/entities"
 	"github.com/ClementTariel/rg-lua/matchmaker/internal/domain/external"
@@ -114,21 +116,32 @@ func (s *MatchmakerService) SaveMatch(matchId uuid.UUID, game []map[int]rgentiti
 		return err
 	}
 	s.isRunning = false
-	err := s.matchRepo.Save(entities.Match{
-		Id:       matchId,
-		BotId1:   s.currentMatch.BotId1,
-		BotId2:   s.currentMatch.BotId2,
-		BotName1: s.currentMatch.BotName1,
-		BotName2: s.currentMatch.BotName2,
-		Date:     time.Now(),
-		Game:     game,
-		Score1:   score1,
-		Score2:   score2,
-	})
+	var err error
+	defer func() {
+		go s.StartDebouncedMatch()
+	}()
+	jsonGame, err := json.Marshal(game)
 	if err != nil {
 		fmt.Printf("Error: %v\n", err)
+		return err
 	}
-	go s.StartDebouncedMatch()
+	codec := zstd.Codec{}
+	compressedGame, err := codec.Encode(nil, jsonGame)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return err
+	}
+	err = s.matchRepo.Save(entities.Match{
+		Id:             matchId,
+		BotId1:         s.currentMatch.BotId1,
+		BotId2:         s.currentMatch.BotId2,
+		BotName1:       s.currentMatch.BotName1,
+		BotName2:       s.currentMatch.BotName2,
+		Date:           time.Now(),
+		CompressedGame: compressedGame,
+		Score1:         score1,
+		Score2:         score2,
+	})
 	return err
 }
 

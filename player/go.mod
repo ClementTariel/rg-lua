@@ -1,6 +1,6 @@
 module github.com/ClementTariel/rg-lua/player
 
-go 1.21.4
+go 1.23.9
 
 require (
 	github.com/labstack/echo v3.3.10+incompatible

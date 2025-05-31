@@ -17,6 +17,7 @@ const (
 )
 
 func main() {
+	e := echo.New()
 
 	// TODO: load user and password from conf or env
 	user := "rglua_user"
@@ -35,8 +36,6 @@ func main() {
 
 	botRepo := db.NewBotRepository(postgresDb)
 	matchRepo := db.NewMatchRepository(postgresDb)
-
-	e := echo.New()
 
 	bouncerService := services.NewBouncerService(botRepo, matchRepo)
 	controllers.NewBouncerController(e, bouncerService)

@@ -12,7 +12,7 @@ ALTER FUNCTION load_bot(TEXT) OWNER TO postgres;
 
 CREATE TABLE users (id UUID PRIMARY KEY, name VARCHAR (20));
 CREATE TABLE bots (id UUID PRIMARY KEY, name VARCHAR (50), script TEXT, userId UUID REFERENCES users (id) , userName VARCHAR (20));
-CREATE TABLE matchs (id UUID PRIMARY KEY, botId1 UUID REFERENCES bots (id), botId2 UUID REFERENCES bots (id), botName1 VARCHAR (50), botName2 VARCHAR (50), date TIMESTAMP, game JSONB, score1 INTEGER, score2 INTEGER);
+CREATE TABLE matchs (id UUID PRIMARY KEY, botId1 UUID REFERENCES bots (id), botId2 UUID REFERENCES bots (id), botName1 VARCHAR (50), botName2 VARCHAR (50), date TIMESTAMP, compressedGame BYTEA, score1 INTEGER, score2 INTEGER);
 
 GRANT SELECT ON TABLE bots TO referee_user;
 

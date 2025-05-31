@@ -1,6 +1,8 @@
 module github.com/ClementTariel/rg-lua/matchmaker
 
-go 1.21.4
+go 1.22
+
+toolchain go1.23.9
 
 require (
 	github.com/google/uuid v1.6.0
@@ -9,6 +11,7 @@ require (
 )
 
 require (
+	github.com/klauspost/compress v1.17.9 // indirect
 	github.com/labstack/gommon v0.4.2 // indirect
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
@@ -25,6 +28,7 @@ require (
 	github.com/ClementTariel/rg-lua/rgcore/rgconst v0.0.0
 	github.com/ClementTariel/rg-lua/rgcore/rgentities v0.0.0
 	github.com/ClementTariel/rg-lua/rgcore/rgutils v0.0.0
+	github.com/parquet-go/parquet-go v0.25.0
 )
 
 replace (

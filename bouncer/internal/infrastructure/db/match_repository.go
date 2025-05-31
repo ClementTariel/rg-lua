@@ -2,9 +2,6 @@ package db
 
 import (
 	"database/sql"
-	"database/sql/driver"
-	"encoding/json"
-	"errors"
 
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -12,22 +9,6 @@ import (
 	"github.com/ClementTariel/rg-lua/bouncer/internal/domain/entities"
 	"github.com/ClementTariel/rg-lua/bouncer/internal/domain/repositories"
 )
-
-type Game entities.Game
-
-// Implement driver.Valuer interface to allow JsonB encoding
-func (g Game) Value() (driver.Value, error) {
-	return json.Marshal(g)
-}
-
-// Implement sql.Scanner interface to allow JsonB decoding
-func (g *Game) Scan(value interface{}) error {
-	bytes, ok := value.([]byte)
-	if !ok {
-		return errors.New("Could not convert value to bytes")
-	}
-	return json.Unmarshal(bytes, &g)
-}
 
 type MatchRepository struct {
 	db *sql.DB
@@ -45,6 +26,9 @@ func (br *MatchRepository) GetById(id uuid.UUID) (entities.Match, error) {
 	if err != nil {
 		return match, err
 	}
-	err = stmt.QueryRow(id).Scan(&match)
+	err = stmt.QueryRow(id).Scan(&match.Id, &match.BotId1, &match.BotId2, &match.BotName1, &match.BotName2, &match.Date, &match.CompressedGame, &match.Score1, &match.Score2)
+	if err != nil {
+		return match, err
+	}
 	return match, err
 }

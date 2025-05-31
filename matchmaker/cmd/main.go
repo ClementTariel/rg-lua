@@ -17,6 +17,8 @@ const (
 )
 
 func main() {
+	e := echo.New()
+
 	// TODO: load user and password from conf or env
 	user := "matchmaker_user"
 	password := "matchmaker_temporary_password"
@@ -34,8 +36,6 @@ func main() {
 
 	botRepo := db.NewBotRepository(postgresDb)
 	matchRepo := db.NewMatchRepository(postgresDb)
-
-	e := echo.New()
 
 	matchmakerService := services.NewMatchmakerService(botRepo, matchRepo)
 	controllers.NewMatchmakerController(e, matchmakerService)
