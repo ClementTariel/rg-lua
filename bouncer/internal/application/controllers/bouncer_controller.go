@@ -21,6 +21,7 @@ func NewBouncerController(e *echo.Echo, bouncerService services.BouncerService) 
 	}
 
 	e.GET("/match/:id", controller.GetMatch)
+	e.GET("/matchs", controller.GetSummaries)
 	e.POST("/request-match", controller.AddMatchToQueue)
 
 	return controller
@@ -37,10 +38,28 @@ func (bc *BouncerController) GetMatch(c echo.Context) error {
 		fmt.Printf("Error: %v\n", err)
 		return c.String(http.StatusInternalServerError, "Internal Error")
 	}
-	stopResponse := &interfaces.GetMatchResponse{
+	getMatchResponse := &interfaces.GetMatchResponse{
 		Match: match,
 	}
-	return c.JSON(http.StatusOK, stopResponse)
+	return c.JSON(http.StatusOK, getMatchResponse)
+}
+
+func (bc *BouncerController) GetSummaries(c echo.Context) error {
+	var getSummariesRequest interfaces.GetSummariesRequest
+	err := c.Bind(&getSummariesRequest)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return c.String(http.StatusBadRequest, "Bad Request")
+	}
+	summaries, err := bc.bouncerService.GetSummaries(getSummariesRequest.Start, getSummariesRequest.Size)
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return c.String(http.StatusInternalServerError, "Internal Error")
+	}
+	getSummariesResponse := &interfaces.GetSummariesResponse{
+		Summaries: summaries,
+	}
+	return c.JSON(http.StatusOK, getSummariesResponse)
 }
 
 func (bc *BouncerController) AddMatchToQueue(c echo.Context) error {

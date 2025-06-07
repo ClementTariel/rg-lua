@@ -7,3 +7,7 @@ import (
 type GetMatchResponse struct {
 	Match entities.Match `json:"match"`
 }
+
+type GetSummariesResponse struct {
+	Summaries []entities.MatchSummary `json:"summaries"`
+}

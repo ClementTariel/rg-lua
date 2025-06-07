@@ -7,5 +7,6 @@ import (
 
 type MatchRepository interface {
 	GetById(id uuid.UUID) (entities.Match, error)
+	GetSummaries(start int, size int) ([]entities.MatchSummary, error)
 	// TODO: WIP
 }

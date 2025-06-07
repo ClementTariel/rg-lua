@@ -29,3 +29,7 @@ func (s *BouncerService) AddMatchToQueue(blueName string, redName string) (bool,
 func (s *BouncerService) GetMatch(matchId uuid.UUID) (entities.Match, error) {
 	return s.matchRepo.GetById(matchId)
 }
+
+func (s *BouncerService) GetSummaries(start int, size int) ([]entities.MatchSummary, error) {
+	return s.matchRepo.GetSummaries(start, size)
+}
