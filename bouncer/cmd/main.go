@@ -6,6 +6,7 @@ import (
 	"strconv"
 
 	"github.com/labstack/echo"
+	"github.com/labstack/echo/middleware"
 
 	"github.com/ClementTariel/rg-lua/bouncer/internal/application/controllers"
 	"github.com/ClementTariel/rg-lua/bouncer/internal/application/services"
@@ -18,6 +19,12 @@ const (
 
 func main() {
 	e := echo.New()
+
+	// TODO: WIP only for dev
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowOrigins: []string{"http://localhost:5173"},
+		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept},
+	}))
 
 	// TODO: load user and password from conf or env
 	user := "rglua_user"

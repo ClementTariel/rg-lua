@@ -23,6 +23,10 @@ You need:
 - [docker](https://www.docker.com/) 
 - an API client such as [bruno](https://www.usebruno.com/) (a bruno collection is provided in this project under the flolder `bruno`)
 
+### optional (for dev)
+
+- [vue 3](https://vuejs.org) to run the frontend locally with hot reloading
+
 ## Quick start
 
 ### Build
@@ -35,7 +39,7 @@ To clear the database if you have messed it up and want to reset it run `make cl
 
 ### Run
 
-Once the images are built, you can run matches locally.
+Once the images are built, you can run matchs locally.
 
 First you need to run the images, open a terminal and run `make run`.
 The output of a match will appear in this terminal when it ends.
