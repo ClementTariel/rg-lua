@@ -3,13 +3,14 @@
 
   // TODO: WIP type
   const props = defineProps<{
-    game: { turns: any[] }
+    game: { turns: any[] },
+    metadata: any
   }>();
 
   const gridRadius: number = 8.5
   const gridSize: number = (gridRadius + 1) * 2;
   const maxTurn = 100;
-  const autoRunTurnDuration = 500;
+  const autoRunTurnDuration = 1000;
   enum ActionType {
     Move,
     Attack,
@@ -47,7 +48,7 @@
   const grid = computed(() => {
     const computedGrid = Array.from({ length: gridSize }, _ => Array(gridSize));
     if (turn.value >= 0 && props.game?.turns && props.game.turns.length && props.game.turns.length > turn.value) {
-      // TODO: type
+      // TODO: WIP type
       Object.values(props.game.turns[turn.value]).forEach((tile: any) => {
         computedGrid[tile.Bot.X][tile.Bot.Y] = tile
       });
@@ -60,32 +61,142 @@
     return (x - center) ** 2 + (y - center) ** 2
   }
 
+  // TODO: WIP type
+  function getBot(grid: any[][], x: number, y: number): any {
+    return grid?.[x - 1]?.[y - 1]?.Bot
+  }
+
+  // TODO: WIP type
+  function getAction(grid: any[][], x: number, y: number): any {
+    return grid?.[x - 1]?.[y - 1]?.Action
+  }
 
 </script>
 
 <template>
-  <div class="turn-count-box">
-    <p class="turn-count">{{ turn >= 0 ? turn : 0 }}</p>
-  </div>
-  <div class="grid">
-    <div v-for="x in gridSize" class="row">
-      <div v-for="y in gridSize" :style="`--delay: ${(squaredDistToCenter(x, y) / ((gridSize / 2) ** 2))}s`"
-        class="cell" :class="{
-          'enabled-cell': squaredDistToCenter(x, y) < ((gridRadius) ** 2),
-          'blue': grid?.[x - 1]?.[y - 1]?.Bot.PlayerId === 1,
-          'red': grid?.[x - 1]?.[y - 1]?.Bot.PlayerId === 2,
-          'move': grid?.[x - 1]?.[y - 1]?.Action.ActionType === ActionType.Move,
-          'attack': grid?.[x - 1]?.[y - 1]?.Action.ActionType === ActionType.Attack,
-          'guard': grid?.[x - 1]?.[y - 1]?.Action.ActionType === ActionType.Guard,
-          'suicide': grid?.[x - 1]?.[y - 1]?.Action.ActionType === ActionType.Suicide
-        }">
-        <p class="hp">{{ grid?.[x - 1]?.[y - 1]?.Bot.Hp }}</p>
+  <div class="game">
+    <div class="banners">
+      <div class="banner banner-left blue">
+        <span class="user-name">{{ metadata.UserName1 }}</span>
+        <span class="bot-name">{{ metadata.BotName1 }}</span>
+      </div>
+      <div class="banner banner-right red">
+        <span class="bot-name">{{ metadata.BotName2 }}</span>
+        <span class="user-name">{{ metadata.UserName2 }}</span>
+      </div>
+    </div>
+    <div class="turn-count-box">
+      <p class="turn-count">{{ turn >= 0 ? turn : 0 }}</p>
+    </div>
+    <div class="grid">
+      <div v-for="x in gridSize" class="row">
+        <div v-for="y in gridSize" :style="`--delay: ${(squaredDistToCenter(x, y) / ((gridSize / 2) ** 2))}s`"
+          class="cell" :class="{
+            'enabled-cell': squaredDistToCenter(x, y) < ((gridRadius) ** 2),
+            'blue': getBot(grid, x, y)?.PlayerId === 1,
+            'red': getBot(grid, x, y)?.PlayerId === 2,
+            'move': getAction(grid, x, y)?.ActionType === ActionType.Move,
+            'attack': getAction(grid, x, y)?.ActionType === ActionType.Attack,
+            'guard': getAction(grid, x, y)?.ActionType === ActionType.Guard,
+            'suicide': getAction(grid, x, y)?.ActionType === ActionType.Suicide
+          }">
+          <p class="hp">{{ getBot(grid, x, y)?.Hp }}</p>
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <style lang="css" scoped>
+  .game {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+
+  @keyframes spawn-banner-left {
+    from {
+      transform: translate(-100%, 0%);
+    }
+
+    to {
+      transform: translate(0%, 0%);
+    }
+  }
+
+  @keyframes spawn-banner-right {
+    from {
+      transform: translate(100%, 0%);
+    }
+
+    to {
+      transform: translate(0%, 0%);
+    }
+  }
+
+  .banners {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    padding-bottom: 16px;
+  }
+
+  .banner,
+  .banner-left,
+  .banner-right {
+    --banner-height: 40px;
+  }
+
+  .banner {
+    display: flex;
+    flex-direction: row;
+    align-items: end;
+    color: white;
+    width: 50%;
+    height: var(--banner-height);
+  }
+
+  .banner-left {
+    padding-right: var(--banner-height);
+    justify-content: end;
+
+    clip-path: polygon(0% 100%, 100% 0%, 0% 0%);
+    -webkit-clip-path: polygon(0% 100%, calc(100% - var(--banner-height)) 100%, 100% 0%, 0% 0%);
+
+    animation-name: spawn-banner-left;
+    animation-duration: 0.5s;
+    animation-timing-function: ease-in;
+  }
+
+  .banner-right {
+    padding-left: var(--banner-height);
+    justify-content: baseline;
+
+    clip-path: polygon(0% 100%, 100% 100%, 100% 0%, var(--banner-height) 0%);
+    -webkit-clip-path: polygon(0% 100%, 100% 100%, 100% 0%, var(--banner-height) 0%);
+
+    animation-name: spawn-banner-right;
+    animation-duration: 0.5s;
+    animation-timing-function: ease-in;
+  }
+
+  .bot-name {
+    display: flex;
+    height: fit-content;
+    font-size: 28px;
+    font-weight: 700;
+  }
+
+  .user-name {
+    display: flex;
+    height: fit-content;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 4px 8px
+  }
+
   @keyframes spawn-turn-count {
     from {
       transform: scale(0%);
@@ -114,6 +225,7 @@
     background-color: #5a5a5a;
     text-align: center;
     box-shadow: 10px 20px 20px black;
+
     animation-name: spawn-turn-count;
     animation-duration: 0.5s;
   }
@@ -154,10 +266,11 @@
     flex-direction: row;
     width: fit-content;
     height: fit-content;
+    box-shadow: 10px 20px 20px black;
+
     animation-name: spawn-grid;
     animation-duration: 0.5s;
     animation-timing-function: ease-out;
-    box-shadow: 10px 20px 20px black;
   }
 
   .row {
@@ -212,17 +325,18 @@
 
   .hp {
     font-size: 12px;
-    font-weight: bold;
+    font-weight: 600;
     margin: 0;
-    padding: 1px 0px 0px 1px;
+    padding: 1px 0px 0px 0px;
   }
 
   .guard {
-    color: #00ff00;
+    border-color: #00ff00;
   }
 
   .suicide {
     color: #ff8000;
+    border-color: #ff8000;
   }
 
   .move {

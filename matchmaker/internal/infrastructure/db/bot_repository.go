@@ -20,15 +20,21 @@ func NewBotRepository(db *sql.DB) repositories.BotRepository {
 }
 
 func (br *BotRepository) GetIdFromName(name string) (uuid.UUID, error) {
+	id := uuid.Nil
 	stmt, err := br.db.Prepare("SELECT id FROM bots WHERE name= $1")
 	if err != nil {
-		return uuid.Nil, err
+		return id, err
 	}
-	var id uuid.UUID
 	err = stmt.QueryRow(name).Scan(&id)
-	if err != nil {
-		return uuid.Nil, err
-	}
-	return id, nil
+	return id, err
+}
 
+func (br *BotRepository) GetUserNameFromBotId(id uuid.UUID) (string, error) {
+	var name string
+	stmt, err := br.db.Prepare("SELECT name FROM users AS u JOIN (SELECT bots.userId FROM bots WHERE id=$1) AS b ON u.id=b.userId")
+	if err != nil {
+		return name, err
+	}
+	err = stmt.QueryRow(id).Scan(&name)
+	return name, err
 }

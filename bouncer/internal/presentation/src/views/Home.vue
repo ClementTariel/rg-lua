@@ -5,6 +5,7 @@
   import { shallowRef } from 'vue';
 
   const game = shallowRef({ turns: [] });
+  const gameMetadata = shallowRef({});
 
   defineProps<{}>()
 
@@ -16,9 +17,10 @@
     }
   }).then(resp => {
     resp.json().then(matchResp => {
-      let compressedGame = matchResp.match.CompressedGame;
+      let { CompressedGame, ...metadata } = matchResp.match;
+      gameMetadata.value = { ...metadata };
       // TODO: WIP check compability with chromium
-      let bytes = Uint8Array.from(atob(compressedGame), c => c.charCodeAt(0));
+      let bytes = Uint8Array.from(atob(CompressedGame), c => c.charCodeAt(0));
       init().then(() => {
         let utf8Decode = new TextDecoder();
         let payload = utf8Decode.decode(decompress(bytes));
@@ -33,7 +35,7 @@
   <!-- TODO: WIP -->
   <Title title="Welcome to Robot Game" />
   <div class="welcome">
-    <Game class="game" :game="game" />
+    <Game :game="game" :metadata="gameMetadata" />
   </div>
 </template>
 
@@ -43,11 +45,5 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    justify-content: center;
-    align-items: center;
-  }
-
-  .game {
-    margin: auto
   }
 </style>
