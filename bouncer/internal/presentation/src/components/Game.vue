@@ -140,7 +140,6 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    padding-bottom: 16px;
   }
 
   .banner,
@@ -217,14 +216,15 @@
   }
 
   .turn-count-box {
+    z-index: 1;
+    position: relative;
+    top: 20px;
     width: 48px;
     border: 1px solid black;
     border-radius: 8px;
     padding: 4px;
-    margin: 4px;
     background-color: #5a5a5a;
     text-align: center;
-    box-shadow: 10px 20px 20px black;
 
     animation-name: spawn-turn-count;
     animation-duration: 0.5s;
@@ -324,13 +324,18 @@
   }
 
   .hp {
+    align-self: center;
+    width: 100%;
+    height: 18px;
+    text-align: center;
     font-size: 12px;
-    font-weight: 600;
+    font-weight: 700;
     margin: 0;
-    padding: 1px 0px 0px 0px;
+    padding: 0 0 0 0.5px;
   }
 
   .guard {
+    color: #00ff00;
     border-color: #00ff00;
   }
 

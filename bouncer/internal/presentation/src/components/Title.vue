@@ -8,6 +8,6 @@
 
 <style lang="css" scoped>
   .title {
-    margin: 24px;
+    margin: 16px;
   }
 </style>

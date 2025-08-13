@@ -1,7 +1,5 @@
 <script setup lang="ts">
   import Title from '@/components/Title.vue';
-  // TODO: WIP
-  defineProps<{}>()
 </script>
 
 <template>
@@ -35,12 +33,14 @@
       There are no friendly damage (collison, attack and suicide only deal damage to enemy robots).<br />
       They are several waves in which robots spawn randomly, The team that have more robots at the end of the game wins.
     </p>
+    <p>
+      Get more info in the documentation in the <a href="https://github.com/ClementTariel/rg-lua#documentation">github
+        repository</a>
+    </p>
   </div>
 </template>
 
 <style lang="css" scoped>
-
-  /* TODO: WIP */
   .main {
     padding: 24px;
   }
