@@ -12,8 +12,8 @@ ALTER FUNCTION load_bot(TEXT) OWNER TO postgres;
 
 -- TODO: WIP reduce name size
 CREATE TABLE users (id UUID PRIMARY KEY, name VARCHAR (20));
-CREATE TABLE bots (id UUID PRIMARY KEY, name VARCHAR (50), script TEXT, userId UUID REFERENCES users (id) , userName VARCHAR (20));
-CREATE TABLE matchs (id UUID PRIMARY KEY, botId1 UUID REFERENCES bots (id), botId2 UUID REFERENCES bots (id), botName1 VARCHAR (50), botName2 VARCHAR (50), userName1 VARCHAR (20), userName2 VARCHAR (20), date TIMESTAMP, compressedGame BYTEA, score1 INTEGER, score2 INTEGER);
+CREATE TABLE bots (id UUID PRIMARY KEY, name VARCHAR (16), script TEXT, userId UUID REFERENCES users (id) , userName VARCHAR (20));
+CREATE TABLE matchs (id UUID PRIMARY KEY, botId1 UUID REFERENCES bots (id), botId2 UUID REFERENCES bots (id), botName1 VARCHAR (16), botName2 VARCHAR (16), userName1 VARCHAR (20), userName2 VARCHAR (20), date TIMESTAMP, compressedGame BYTEA, score1 INTEGER, score2 INTEGER);
 
 GRANT SELECT ON TABLE bots TO referee_user;
 
