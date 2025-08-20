@@ -333,29 +333,45 @@ int robots_pairs_in_lua(lua_State *pl)
 int loc_map_index_in_lua(lua_State *pl)
 {
     int argc = lua_gettop(pl);
-    if (argc != 2 || !lua_istable(pl, 1))
-    {
-        return 0;
-    }
-    if (!lua_istable(pl, 2))
+    int x = 0;
+    int y = 0;
+    if (argc < 2 || argc > 3 || !lua_istable(pl, 1))
     {
         lua_pushnil(pl);
         return 1;
     }
-    lua_getfield(pl, 1, "x");
-    if (!lua_isinteger(pl, -1))
+    if (argc == 3)
     {
-        lua_pushnil(pl);
-        return 1;
+        if (!lua_isinteger(pl, 2) || !lua_isinteger(pl, 3))
+        {
+            lua_pushnil(pl);
+            return 1;
+        }
+        x = lua_tointeger(pl, 2);
+        y = lua_tointeger(pl, 3);
     }
-    int x = lua_tointeger(pl, -1);
-    lua_getfield(pl, 1, "y");
-    if (!lua_isinteger(pl, -1))
+    else
     {
-        lua_pushnil(pl);
-        return 1;
+        if (!lua_istable(pl, 2))
+        {
+            lua_pushnil(pl);
+            return 1;
+        }
+        lua_getfield(pl, 2, "x");
+        if (!lua_isinteger(pl, -1))
+        {
+            lua_pushnil(pl);
+            return 1;
+        }
+        x = lua_tointeger(pl, -1);
+        lua_getfield(pl, 2, "y");
+        if (!lua_isinteger(pl, -1))
+        {
+            lua_pushnil(pl);
+            return 1;
+        }
+        y = lua_tointeger(pl, -1);
     }
-    int y = lua_tointeger(pl, -1);
     if (x < 0 || x > GRID_SIZE || y < 0 || y > GRID_SIZE)
     {
         lua_pushnil(pl);
