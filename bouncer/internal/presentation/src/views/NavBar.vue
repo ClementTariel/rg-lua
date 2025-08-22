@@ -9,7 +9,7 @@
 <template>
   <nav>
     <div class="tab">
-      <RouterLink v-for="tab in tabs" :to="tab.path" class="link" :class="{
+      <RouterLink v-for="tab in tabs" :key="tab.path" :to="tab.path" class="link" :class="{
         'selected-link': router.currentRoute.value.path === tab.path,
         'active-link': router.currentRoute.value.path !== tab.path
       }">

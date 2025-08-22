@@ -1,5 +1,14 @@
 <script setup lang="ts">
   import { computed } from 'vue';
+  import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+  import { library } from '@fortawesome/fontawesome-svg-core';
+
+  /* import all the icons in Free Solid, Free Regular, and Brands styles */
+  import { fas } from '@fortawesome/free-solid-svg-icons';
+  import { far } from '@fortawesome/free-regular-svg-icons';
+  import { fab } from '@fortawesome/free-brands-svg-icons';
+  library.add(fas, far, fab);
+
   // TODO: WIP type
   const props = defineProps<{
     preview: any;
@@ -7,16 +16,15 @@
   }>();
 
   function getResultIcon(result: number): string {
-    // TODO: use icons
     if (result == 0) {
-      return "="
+      return "equals";
     }
-    return result > 0 ? "V" : "X"
+    return result > 0 ? "check" : "xmark";
   }
 
   const trueBlueResult = computed(() => {
-    return props.preview.Score1 - props.preview.Score2
-  })
+    return props.preview.Score1 - props.preview.Score2;
+  });
 </script>
 
 <template>
@@ -26,15 +34,13 @@
     <div class="blueName" :class="{ 'winner': trueBlueResult > 0, 'loser': trueBlueResult < 0 }">
       {{ props.preview.BotName1 }}
     </div>
-    <div :class="{ 'winner': trueBlueResult > 0, 'loser': trueBlueResult < 0 }">
-      {{ getResultIcon(trueBlueResult) }}
-    </div>
+    <FontAwesomeIcon :icon="['fas', getResultIcon(trueBlueResult)]"
+      :class="{ 'winner': trueBlueResult > 0, 'loser': trueBlueResult < 0 }" />
     <div class="score">
       {{ props.preview.Score1 }} - {{ props.preview.Score2 }}
     </div>
-    <div :class="{ 'winner': trueBlueResult < 0, 'loser': trueBlueResult > 0 }">
-      {{ getResultIcon(-trueBlueResult) }}
-    </div>
+    <FontAwesomeIcon :icon="['fas', getResultIcon(-trueBlueResult)]"
+      :class="{ 'winner': trueBlueResult < 0, 'loser': trueBlueResult > 0 }" />
     <div class="redName" :class="{ 'winner': trueBlueResult < 0, 'loser': trueBlueResult > 0 }">
       {{ props.preview.BotName2 }}
     </div>

@@ -36,7 +36,7 @@
     }
   })
 
-  watch(() => turn.value, async (currentTurn, previousTurn) => {
+  watch(turn, async (currentTurn, previousTurn) => {
     if (currentTurn < maxTurn) {
       setTimeout(() => {
         turn.value = currentTurn + 1;

@@ -15,6 +15,12 @@
   },
   "dependencies": {
     "@bokuweb/zstd-wasm": "^0.0.27",
+    "@fortawesome/fontawesome-svg-core": "^7.0.0",
+    "@fortawesome/free-brands-svg-icons": "^7.0.0",
+    "@fortawesome/free-regular-svg-icons": "^7.0.0",
+    "@fortawesome/free-solid-svg-icons": "^7.0.0",
+    "@fortawesome/vue-fontawesome": "^3.1.1",
+    "@typescript-eslint/types": "^8.40.0",
     "vue": "^3.5.13",
     "vue-router": "^4.5.0"
   },

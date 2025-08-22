@@ -1,5 +1,13 @@
 <script setup lang="ts">
-  defineProps<{ page: any }>()
+  // TODO: type
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  defineProps<{ page: any }>();
+  defineEmits({
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    updatePaginationSize: (size: number) => true,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    updatePaginationStart: (start: number) => true,
+  });
 
   const sizes = [10, 20, 50];
 </script>
