@@ -18,7 +18,7 @@
 
     <div class="sizes">
       <div>rows : </div>
-      <button v-for="size in sizes" @click="$emit('updatePaginationSize', size)" class="button"
+      <button v-for="size in sizes" :key="size" @click="$emit('updatePaginationSize', size)" class="button"
         :class="{ 'current': size === page.size }" v-bind:disabled="size === page.size">{{ size }}</button>
     </div>
 
@@ -30,14 +30,14 @@
         <button class="button" @click="$emit('updatePaginationStart', 1)">1</button>
       </div>
       <div v-if="page.start - 3 > 1">...</div>
-      <div v-for="offset in 2">
+      <div v-for="offset in 2" :key="offset">
         <button class="button" v-if="page.start - 3 + offset > 1"
           @click="$emit('updatePaginationStart', page.start - 3 + offset)">
           {{ page.start - 3 + offset }}
         </button>
       </div>
       <button class="button current" disabled>{{ page.start }}</button>
-      <div v-for="offset in 2" class="row">
+      <div v-for="offset in 2" :key="offset" class="row">
         <button class="button" v-if="page.start + offset < page.last"
           @click="$emit('updatePaginationStart', page.start + offset)">
           {{ page.start + offset }}
@@ -55,7 +55,7 @@
 
   <div v-if="page.elements">
     <slot name="separator"></slot>
-    <div v-for="index in page.elements.length ?? 0">
+    <div v-for="index in page.elements.length ?? 0" :key="index">
       <slot name="data" v-bind="{ index }" />
       <slot name="separator"></slot>
     </div>

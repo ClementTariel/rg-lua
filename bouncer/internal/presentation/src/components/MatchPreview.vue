@@ -11,6 +11,7 @@
 
   // TODO: WIP type
   const props = defineProps<{
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     preview: any;
     index: number;
   }>();
@@ -37,7 +38,9 @@
     <FontAwesomeIcon :icon="['fas', getResultIcon(trueBlueResult)]"
       :class="{ 'winner': trueBlueResult > 0, 'loser': trueBlueResult < 0 }" />
     <div class="score">
-      {{ props.preview.Score1 }} - {{ props.preview.Score2 }}
+      <span class="blueScore">{{ props.preview.Score1 }}</span>
+      <span>-</span>
+      <span class="redScore">{{ props.preview.Score2 }}</span>
     </div>
     <FontAwesomeIcon :icon="['fas', getResultIcon(-trueBlueResult)]"
       :class="{ 'winner': trueBlueResult < 0, 'loser': trueBlueResult > 0 }" />
@@ -74,8 +77,22 @@
     text-align: left;
   }
 
+  .blueScore,
+  .redScore {
+    padding: 0 8px;
+    width: 20px;
+    display: inline-block;
+  }
+
+  .blueScore {
+    text-align: right;
+  }
+
+  .redScore {
+    text-align: left;
+  }
+
   .score {
-    width: 70px;
     font-weight: 700;
     text-align: center;
   }

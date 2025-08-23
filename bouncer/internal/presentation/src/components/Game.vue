@@ -1,9 +1,20 @@
 <script setup lang="ts">
   import { computed, ref, watch } from 'vue';
 
+  import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
+  import { library } from '@fortawesome/fontawesome-svg-core';
+
+  /* import all the icons in Free Solid, Free Regular, and Brands styles */
+  import { fas, faXRay } from '@fortawesome/free-solid-svg-icons';
+  import { far } from '@fortawesome/free-regular-svg-icons';
+  import { fab } from '@fortawesome/free-brands-svg-icons';
+  library.add(fas, far, fab);
+
   // TODO: WIP type
   const props = defineProps<{
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     game: { turns: any[] },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata: any
   }>();
 
@@ -62,11 +73,13 @@
   }
 
   // TODO: WIP type
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function getBot(grid: any[][], x: number, y: number): any {
     return grid?.[x - 1]?.[y - 1]?.Bot
   }
 
   // TODO: WIP type
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function getAction(grid: any[][], x: number, y: number): any {
     return grid?.[x - 1]?.[y - 1]?.Action
   }
@@ -89,17 +102,28 @@
       <p class="turn-count">{{ turn >= 0 ? turn : 0 }}</p>
     </div>
     <div class="grid">
-      <div v-for="x in gridSize" class="row">
-        <div v-for="y in gridSize" :style="`--delay: ${(squaredDistToCenter(x, y) / ((gridSize / 2) ** 2))}s`"
+      <div v-for="x in gridSize" :key="x" class="row">
+        <div v-for="y in gridSize" :key="y" :style="`--delay: ${(squaredDistToCenter(x, y) / ((gridSize / 2) ** 2))}s`"
           class="cell" :class="{
             'enabled-cell': squaredDistToCenter(x, y) < ((gridRadius) ** 2),
             'blue': getBot(grid, x, y)?.PlayerId === 1,
             'red': getBot(grid, x, y)?.PlayerId === 2,
-            'move': getAction(grid, x, y)?.ActionType === ActionType.Move,
-            'attack': getAction(grid, x, y)?.ActionType === ActionType.Attack,
             'guard': getAction(grid, x, y)?.ActionType === ActionType.Guard,
             'suicide': getAction(grid, x, y)?.ActionType === ActionType.Suicide
           }">
+          <div class="bot-move-wrapper" :class="{
+            'move': getAction(grid, x, y)?.ActionType === ActionType.Move,
+            'attack': getAction(grid, x, y)?.ActionType === ActionType.Attack
+          }">
+            <FontAwesomeIcon v-if="getAction(grid, x, y)?.Y + 1 == y - 1" class="bot-move-icon top-icon"
+              :icon="['fas', 'caret-up']" />
+            <FontAwesomeIcon v-if="getAction(grid, x, y)?.X + 1 == x + 1" class="bot-move-icon right-icon"
+              :icon="['fas', 'caret-right']" />
+            <FontAwesomeIcon v-if="getAction(grid, x, y)?.Y + 1 == y + 1" class="bot-move-icon bottom-icon"
+              :icon="['fas', 'caret-down']" />
+            <FontAwesomeIcon v-if="getAction(grid, x, y)?.X + 1 == x - 1" class="bot-move-icon left-icon"
+              :icon="['fas', 'caret-left']" />
+          </div>
           <p class="hp">{{ getBot(grid, x, y)?.Hp }}</p>
         </div>
       </div>
@@ -313,6 +337,7 @@
     justify-items: center;
     align-items: center;
     color: white;
+    position: relative;
   }
 
   .enabled-cell {
@@ -321,6 +346,39 @@
     animation-name: sleepy-cell, spawn-cell;
     animation-duration: calc(0.5s + var(--delay)/2), 0.25s;
     animation-delay: 0s, calc(0.5s + var(--delay)/2);
+  }
+
+  .bot-move-wrapper {
+    position: absolute;
+    width: 16px;
+    height: 16px;
+  }
+
+  .bot-move-icon {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    font-size: 8px;
+  }
+
+  .top-icon {
+    top: -4px;
+    left: 4px;
+  }
+
+  .right-icon {
+    top: 4px;
+    left: 12px;
+  }
+
+  .bottom-icon {
+    top: 12px;
+    left: 4px;
+  }
+
+  .left-icon {
+    top: 4px;
+    left: -4px;
   }
 
   .hp {
@@ -340,16 +398,16 @@
   }
 
   .suicide {
-    color: #ff8000;
-    border-color: #ff8000;
+    color: #ffff00;
+    border-color: #ffff00;
   }
 
   .move {
-    /* TODO: WIP */
+    color: #00ffff;
   }
 
   .attack {
-    /* TODO: WIP */
+    color: #ff8000;
   }
 
   .red {
