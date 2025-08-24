@@ -1,11 +1,11 @@
 <script setup lang="ts">
-  import { computed, ref, watch } from 'vue';
+  import { computed, onUnmounted, ref, watch } from 'vue';
 
   import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome';
   import { library } from '@fortawesome/fontawesome-svg-core';
 
   /* import all the icons in Free Solid, Free Regular, and Brands styles */
-  import { fas, faXRay } from '@fortawesome/free-solid-svg-icons';
+  import { fas } from '@fortawesome/free-solid-svg-icons';
   import { far } from '@fortawesome/free-regular-svg-icons';
   import { fab } from '@fortawesome/free-brands-svg-icons';
   library.add(fas, far, fab);
@@ -30,36 +30,36 @@
   }
   let gameLoaded = false;
   let animationDone = false;
-  setTimeout(() => {
+  const animationTimeout = setTimeout(() => {
     animationDone = true;
     if (gameLoaded) {
       turn.value = 0;
     }
   }, 1000);
-
+  let turnTimeout: number | undefined;
 
   const turn = ref(-1);
 
-  watch(() => props.game, async (loadedGame, previousGame) => {
+  watch(() => props.game, async () => {
     gameLoaded = true;
     if (animationDone) {
       turn.value = 0;
     }
   })
 
-  watch(turn, async (currentTurn, previousTurn) => {
+  watch(turn, async (currentTurn) => {
     if (currentTurn < maxTurn) {
-      setTimeout(() => {
+      turnTimeout = setTimeout(() => {
         turn.value = currentTurn + 1;
       }, autoRunTurnDuration);
     }
   })
 
-
   const grid = computed(() => {
-    const computedGrid = Array.from({ length: gridSize }, _ => Array(gridSize));
+    const computedGrid = Array.from({ length: gridSize }, () => Array(gridSize));
     if (turn.value >= 0 && props.game?.turns && props.game.turns.length && props.game.turns.length > turn.value) {
       // TODO: WIP type
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       Object.values(props.game.turns[turn.value]).forEach((tile: any) => {
         computedGrid[tile.Bot.X][tile.Bot.Y] = tile
       });
@@ -84,6 +84,10 @@
     return grid?.[x - 1]?.[y - 1]?.Action
   }
 
+  onUnmounted(() => {
+    clearTimeout(animationTimeout);
+    clearTimeout(turnTimeout);
+  })
 </script>
 
 <template>

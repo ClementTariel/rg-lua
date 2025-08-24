@@ -1,11 +1,15 @@
 <script setup lang="ts">
   import Title from '@/components/Title.vue';
   import Game from '@/components/Game.vue';
-  import { init, decompress } from '@bokuweb/zstd-wasm';
   import { shallowRef } from 'vue';
 
+  import { useZstdStore } from '@/stores/zstd.ts';
+
+  const zstd = useZstdStore();
+
   // TODO: WIP type
-  const game = shallowRef({ turns: [] });
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const game = shallowRef({ turns: [] as any[] });
   const gameMetadata = shallowRef({});
 
   // TODO: WIP
@@ -13,22 +17,21 @@
     headers: {
       "Accept": "application/json",
       "Content-Type": "application/json",
-    }
-  }).then(resp => {
-    resp.json().then(matchResp => {
-      if (matchResp.match) {
-        let { CompressedGame, ...metadata } = matchResp.match;
+    },
+  }).then(resp => resp.json())
+    .then(matchResp => {
+      if (matchResp?.match) {
+        const { CompressedGame, ...metadata } = matchResp.match;
         gameMetadata.value = { ...metadata };
-        let bytes = Uint8Array.from(atob(CompressedGame), c => c.charCodeAt(0));
-        init().then(() => {
-          let utf8Decode = new TextDecoder();
-          let payload = utf8Decode.decode(decompress(bytes));
-          game.value = { turns: JSON.parse(payload) };
+        const bytes = Uint8Array.from(atob(CompressedGame), c => c.charCodeAt(0));
+        const utf8Decode = new TextDecoder();
+        zstd.initialize().then(() => {
+          const payload = utf8Decode.decode(zstd.decompress(bytes));
+          const turns = JSON.parse(payload);
+          game.value = { turns };
         })
       }
     });
-  });
-
 </script>
 
 <template>
