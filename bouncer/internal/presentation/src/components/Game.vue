@@ -40,12 +40,15 @@
 
   const turn = ref(-1);
 
-  watch(() => props.game, async () => {
-    gameLoaded = true;
-    if (animationDone) {
-      turn.value = 0;
+  watch(() => props.game, async (currentGame) => {
+    if (currentGame?.turns?.length) {
+      gameLoaded = true;
+      if (animationDone) {
+        turn.value = 0;
+      }
     }
-  })
+  },
+    { immediate: true })
 
   watch(turn, async (currentTurn) => {
     if (currentTurn < maxTurn) {
@@ -92,16 +95,6 @@
 
 <template>
   <div class="game">
-    <div class="banners">
-      <div class="banner banner-left blue">
-        <span class="user-name">{{ metadata.UserName1 }}</span>
-        <span class="bot-name">{{ metadata.BotName1 }}</span>
-      </div>
-      <div class="banner banner-right red">
-        <span class="bot-name">{{ metadata.BotName2 }}</span>
-        <span class="user-name">{{ metadata.UserName2 }}</span>
-      </div>
-    </div>
     <div class="turn-count-box">
       <p class="turn-count">{{ turn >= 0 ? turn : 0 }}</p>
     </div>
@@ -141,87 +134,6 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
-  }
-
-  @keyframes spawn-banner-left {
-    from {
-      transform: translate(-100%, 0%);
-    }
-
-    to {
-      transform: translate(0%, 0%);
-    }
-  }
-
-  @keyframes spawn-banner-right {
-    from {
-      transform: translate(100%, 0%);
-    }
-
-    to {
-      transform: translate(0%, 0%);
-    }
-  }
-
-  .banners {
-    width: 100%;
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-  }
-
-  .banner,
-  .banner-left,
-  .banner-right {
-    --banner-height: 40px;
-  }
-
-  .banner {
-    display: flex;
-    flex-direction: row;
-    align-items: end;
-    color: white;
-    width: 50%;
-    height: var(--banner-height);
-  }
-
-  .banner-left {
-    padding-right: var(--banner-height);
-    justify-content: end;
-
-    clip-path: polygon(0% 100%, 100% 0%, 0% 0%);
-    -webkit-clip-path: polygon(0% 100%, calc(100% - var(--banner-height)) 100%, 100% 0%, 0% 0%);
-
-    animation-name: spawn-banner-left;
-    animation-duration: 0.5s;
-    animation-timing-function: ease-in;
-  }
-
-  .banner-right {
-    padding-left: var(--banner-height);
-    justify-content: baseline;
-
-    clip-path: polygon(0% 100%, 100% 100%, 100% 0%, var(--banner-height) 0%);
-    -webkit-clip-path: polygon(0% 100%, 100% 100%, 100% 0%, var(--banner-height) 0%);
-
-    animation-name: spawn-banner-right;
-    animation-duration: 0.5s;
-    animation-timing-function: ease-in;
-  }
-
-  .bot-name {
-    display: flex;
-    height: fit-content;
-    font-size: 28px;
-    font-weight: 700;
-  }
-
-  .user-name {
-    display: flex;
-    height: fit-content;
-    font-size: 12px;
-    font-weight: 700;
-    padding: 4px 8px
   }
 
   @keyframes spawn-turn-count {

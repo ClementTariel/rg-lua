@@ -1,10 +1,10 @@
 <script setup lang="ts">
-  import { routes } from './router';
+  import { mainRoutes } from './router';
   import NavBar from './views/NavBar.vue';
 </script>
 
 <template>
-  <NavBar :tabs="routes" />
+  <NavBar :tabs="mainRoutes" />
   <RouterView />
 </template>
 

@@ -30,7 +30,7 @@
 
 <template>
   <!-- TODO: WIP navigate to full match display -->
-  <div class="wrapper">
+  <RouterLink :to="`matchs/${props.preview.Id}`" class="wrapper">
     <div class="count">{{ props.index }}</div>
     <div class="blueName" :class="{ 'winner': trueBlueResult > 0, 'loser': trueBlueResult < 0 }">
       {{ props.preview.BotName1 }}
@@ -47,7 +47,7 @@
     <div class="redName" :class="{ 'winner': trueBlueResult < 0, 'loser': trueBlueResult > 0 }">
       {{ props.preview.BotName2 }}
     </div>
-  </div>
+  </RouterLink>
 </template>
 
 <style lang="css" scoped>
@@ -57,6 +57,9 @@
     padding: 8px;
     column-gap: 32px;
     width: 100%;
+
+    color: black;
+    text-decoration: none;
   }
 
   .count {

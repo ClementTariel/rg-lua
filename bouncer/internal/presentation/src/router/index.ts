@@ -1,8 +1,7 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import Home from '../views/Home.vue'
 
-export const routes: RouteRecordRaw[] = [
-
+export const mainRoutes: RouteRecordRaw[] = [
   {
     path: '/home',
     name: 'Home',
@@ -44,12 +43,25 @@ export const routes: RouteRecordRaw[] = [
   },
 ];
 
+export const routes: RouteRecordRaw[] = [
+  {
+    path: '/',
+    redirect: '/home',
+  },
+  ...mainRoutes,
+  {
+    path: '/matchs/:id',
+    name: 'Match details',
+    // route level code-splitting
+    // this generates a separate chunk for this route
+    // which is lazy-loaded when the route is visited.
+    component: () => import('../views/MatchDetails.vue'),
+  },
+];
+
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [{
-    ...routes[0],
-    path: '/',
-  }, ...routes]
+  routes
 })
 
 export default router
