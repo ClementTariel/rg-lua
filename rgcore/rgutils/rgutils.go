@@ -49,11 +49,11 @@ func Enemies(playerId int, bots []rgentities.Bot) []rgentities.Bot {
 	return enemies
 }
 
-func FilterOutDeadBots(bots map[int]rgentities.Bot) []rgentities.Bot {
+func FilterOutDeadBots(bots map[int]rgentities.BotState) []rgentities.Bot {
 	filteredBots := []rgentities.Bot{}
-	for _, bot := range bots {
-		if bot.Hp > 0 {
-			filteredBots = append(filteredBots, bot)
+	for _, botState := range bots {
+		if botState.Bot.Hp > 0 {
+			filteredBots = append(filteredBots, botState.Bot)
 		}
 	}
 	return filteredBots

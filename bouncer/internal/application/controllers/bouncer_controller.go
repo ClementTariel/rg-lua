@@ -21,6 +21,7 @@ func NewBouncerController(e *echo.Echo, bouncerService services.BouncerService) 
 	}
 
 	e.GET("/match/:id", controller.GetMatch)
+	e.GET("/highlighted-match", controller.GetHighlightedMatch)
 	e.GET("/matchs", controller.GetSummaries)
 	e.POST("/request-match", controller.AddMatchToQueue)
 
@@ -40,6 +41,21 @@ func (bc *BouncerController) GetMatch(c echo.Context) error {
 	}
 	getMatchResponse := &interfaces.GetMatchResponse{
 		Match: match,
+	}
+	return c.JSON(http.StatusOK, getMatchResponse)
+}
+
+func (bc *BouncerController) GetHighlightedMatch(c echo.Context) error {
+	match, err := bc.bouncerService.GetHighlightedMatch()
+	if err != nil {
+		fmt.Printf("Error: %v\n", err)
+		return c.String(http.StatusInternalServerError, "Internal Error")
+	}
+	if match == nil {
+		return c.String(http.StatusNotFound, "Not found")
+	}
+	getMatchResponse := &interfaces.GetMatchResponse{
+		Match: *match,
 	}
 	return c.JSON(http.StatusOK, getMatchResponse)
 }

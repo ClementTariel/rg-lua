@@ -1,0 +1,15 @@
+meta {
+  name: get-highlighted-match
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{baseUrl}}:5555/highlighted-match
+  body: json
+  auth: none
+}
+
+vars:pre-request {
+  baseUrl: http://localhost
+}

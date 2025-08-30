@@ -20,35 +20,35 @@ func NewMatchRepository(db *sql.DB) repositories.MatchRepository {
 	}
 }
 
-func (br *MatchRepository) GetById(id uuid.UUID) (entities.Match, error) {
+func (mr *MatchRepository) GetById(id uuid.UUID) (entities.Match, error) {
 	var match entities.Match
-	stmt, err := br.db.Prepare("SELECT * FROM matchs WHERE id=$1")
+	stmt, err := mr.db.Prepare("SELECT * FROM matchs WHERE id=$1")
 	if err != nil {
 		return match, err
 	}
-	err = stmt.QueryRow(id).Scan(&match.Id, &match.BotId1, &match.BotId2, &match.BotName1, &match.BotName2, &match.Date, &match.CompressedGame, &match.Score1, &match.Score2)
+	err = stmt.QueryRow(id).Scan(&match.Id, &match.BotId1, &match.BotId2, &match.BotName1, &match.BotName2, &match.UserName1, &match.UserName2, &match.Date, &match.CompressedGame, &match.Score1, &match.Score2)
 	if err != nil {
 		return match, err
 	}
 	return match, err
 }
 
-func (br *MatchRepository) GetSummaries(start int, size int) ([]entities.MatchSummary, error) {
+func (mr *MatchRepository) GetSummaries(start int, size int) ([]entities.MatchSummary, error) {
 	var matchs []entities.MatchSummary
-	stmt, err := br.db.Prepare("SELECT id, botId1, botId2, botName1, botName2, date, score1, score2 FROM (" +
+	stmt, err := mr.db.Prepare("SELECT id, botId1, botId2, botName1, botName2, userName1, userName2, date, score1, score2 FROM (" +
 		"SELECT ROW_NUMBER() OVER (ORDER BY date DESC) as rowNum, * FROM matchs" +
 		") WHERE (rowNum>=$1 AND rowNum<$2) ORDER BY rowNum")
 	if err != nil {
 		return matchs, err
 	}
-	rows, err := stmt.Query(start, size)
+	rows, err := stmt.Query(start, start+size)
 	if err != nil {
 		return matchs, err
 	}
 	defer rows.Close()
 	for rows.Next() {
 		var match entities.MatchSummary
-		err = rows.Scan(&match.Id, &match.BotId1, &match.BotId2, &match.BotName1, &match.BotName2, &match.Date, &match.Score1, &match.Score2)
+		err = rows.Scan(&match.Id, &match.BotId1, &match.BotId2, &match.BotName1, &match.BotName2, &match.UserName1, &match.UserName2, &match.Date, &match.Score1, &match.Score2)
 		if err != nil {
 			return matchs, err
 		}

@@ -16,6 +16,8 @@ type Match struct {
 	BotId2         uuid.UUID
 	BotName1       string
 	BotName2       string
+	UserName1      string
+	UserName2      string
 	Date           time.Time
 	CompressedGame []byte
 	Score1         int

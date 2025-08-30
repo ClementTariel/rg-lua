@@ -137,6 +137,8 @@ func (s *MatchmakerService) SaveMatch(matchId uuid.UUID, game []map[int]rgentiti
 		BotId2:         s.currentMatch.BotId2,
 		BotName1:       s.currentMatch.BotName1,
 		BotName2:       s.currentMatch.BotName2,
+		UserName1:      s.currentMatch.UserName1,
+		UserName2:      s.currentMatch.UserName2,
 		Date:           time.Now(),
 		CompressedGame: compressedGame,
 		Score1:         score1,
@@ -172,12 +174,22 @@ func (s *MatchmakerService) AddMatchToQueue(blueName string, redName string) (bo
 	if err != nil {
 		return false, err
 	}
+	blueUserName, err := s.botRepo.GetUserNameFromBotId(blueId)
+	if err != nil {
+		return false, err
+	}
+	redUserName, err := s.botRepo.GetUserNameFromBotId(redId)
+	if err != nil {
+		return false, err
+	}
 	pendingMatch := entities.PendingMatch{
-		Id:       uuid.New(),
-		BotId1:   blueId,
-		BotId2:   redId,
-		BotName1: blueName,
-		BotName2: redName,
+		Id:        uuid.New(),
+		BotId1:    blueId,
+		BotId2:    redId,
+		BotName1:  blueName,
+		BotName2:  redName,
+		UserName1: blueUserName,
+		UserName2: redUserName,
 	}
 	added := s.matchQueue.Push(pendingMatch)
 	go s.StartDebouncedMatch()
