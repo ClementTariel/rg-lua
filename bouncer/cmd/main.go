@@ -47,5 +47,8 @@ func main() {
 	bouncerService := services.NewBouncerService(botRepo, matchRepo)
 	controllers.NewBouncerController(e, bouncerService)
 
+	// Serve frontend
+	e.Static("/", "dist/")
+
 	e.Logger.Fatal(e.Start(":" + strconv.Itoa(PORT)))
 }

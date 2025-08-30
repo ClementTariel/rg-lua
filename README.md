@@ -66,6 +66,8 @@ The names must correspond to names of bots in the database.
 
 Checkout the [Default robots](#default-robots) section for more information on the robots available.
 
+You can use the front-end to watch your matchs with your browser at `localhost:5555`.
+
 ### Troubleshooting
 
 Sometimes a `Network deployment_default  Error` can occur. I did not find any other solution than a complete reboot of the host to fix this issue.

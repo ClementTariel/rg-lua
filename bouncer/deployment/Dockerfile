@@ -28,9 +28,19 @@ COPY ./bouncer/cmd cmd
 RUN CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -ldflags '-linkmode external -extldflags "-static" -w -s' -a -o cmd/main cmd/main.go
 
 #-------------------------------------------------------
+FROM node:lts-alpine as frontend-builder
+
+COPY ./bouncer/internal/presentation /bouncer/internal/presentation
+WORKDIR /bouncer/internal/presentation
+RUN npm install
+RUN npm run build
+
+#-------------------------------------------------------
 FROM scratch
 
 COPY --from=backend-builder ./bouncer/cmd/main ./
+
+COPY --from=frontend-builder /bouncer/internal/presentation/dist ./dist
 
 EXPOSE 5555
 
