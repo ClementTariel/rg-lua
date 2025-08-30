@@ -110,16 +110,21 @@
           }">
           <div class="bot-move-wrapper" :class="{
             'move': getAction(grid, x, y)?.ActionType === ActionType.Move,
-            'attack': getAction(grid, x, y)?.ActionType === ActionType.Attack
+            'attack': getAction(grid, x, y)?.ActionType === ActionType.Attack,
+            'suicide': getAction(grid, x, y)?.ActionType === ActionType.Suicide
           }">
-            <FontAwesomeIcon v-if="getAction(grid, x, y)?.Y + 1 == y - 1" class="bot-move-icon top-icon"
-              :icon="['fas', 'caret-up']" />
-            <FontAwesomeIcon v-if="getAction(grid, x, y)?.X + 1 == x + 1" class="bot-move-icon right-icon"
-              :icon="['fas', 'caret-right']" />
-            <FontAwesomeIcon v-if="getAction(grid, x, y)?.Y + 1 == y + 1" class="bot-move-icon bottom-icon"
-              :icon="['fas', 'caret-down']" />
-            <FontAwesomeIcon v-if="getAction(grid, x, y)?.X + 1 == x - 1" class="bot-move-icon left-icon"
-              :icon="['fas', 'caret-left']" />
+            <FontAwesomeIcon
+              v-if="getAction(grid, x, y)?.ActionType === ActionType.Suicide || getAction(grid, x, y)?.Y + 1 == y - 1"
+              class="bot-move-icon top-icon" :icon="['fas', 'caret-up']" />
+            <FontAwesomeIcon
+              v-if="getAction(grid, x, y)?.ActionType === ActionType.Suicide || getAction(grid, x, y)?.X + 1 == x + 1"
+              class="bot-move-icon right-icon" :icon="['fas', 'caret-right']" />
+            <FontAwesomeIcon
+              v-if="getAction(grid, x, y)?.ActionType === ActionType.Suicide || getAction(grid, x, y)?.Y + 1 == y + 1"
+              class="bot-move-icon bottom-icon" :icon="['fas', 'caret-down']" />
+            <FontAwesomeIcon
+              v-if="getAction(grid, x, y)?.ActionType === ActionType.Suicide || getAction(grid, x, y)?.X + 1 == x - 1"
+              class="bot-move-icon left-icon" :icon="['fas', 'caret-left']" />
           </div>
           <p class="hp">{{ getBot(grid, x, y)?.Hp }}</p>
         </div>
