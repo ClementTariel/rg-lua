@@ -29,8 +29,8 @@ type (
 func GetActionWithTimeout(pl unsafe.Pointer, bot rgentities.Bot) (rgentities.Action, *rgerrors.RGError) {
 	cAction := CAction{
 		actionType: (C.int)(rgconst.SUICIDE),
-		x:          -1,
-		y:          -1,
+		x:          (C.int)(-1),
+		y:          (C.int)(-1),
 	}
 	action := rgentities.Action{
 		ActionType: rgconst.SUICIDE,
@@ -53,15 +53,17 @@ func GetActionWithTimeout(pl unsafe.Pointer, bot rgentities.Bot) (rgentities.Act
 		fmt.Printf("Error after timed exection: %v\n", rgerrors.INVALID_ACTION_TYPE_ERROR)
 		return action, rgerrors.INVALID_ACTION_TYPE_ERROR
 	}
-	if int(cAction.x) >= 0 &&
-		int(cAction.x) < rgconst.GRID_SIZE &&
-		int(cAction.y) >= 0 &&
-		int(cAction.y) < rgconst.GRID_SIZE {
-		action.X = int(cAction.x)
-		action.Y = int(cAction.y)
-	} else {
-		action.ActionType = rgconst.GUARD
-		err = rgerrors.INVALID_MOVE_ERROR
+	if action.ActionType == rgconst.MOVE || action.ActionType == rgconst.ATTACK {
+		if int(cAction.x) >= 0 &&
+			int(cAction.x) < rgconst.GRID_SIZE &&
+			int(cAction.y) >= 0 &&
+			int(cAction.y) < rgconst.GRID_SIZE {
+			action.X = int(cAction.x)
+			action.Y = int(cAction.y)
+		} else {
+			action.ActionType = rgconst.GUARD
+			err = rgerrors.INVALID_MOVE_ERROR
+		}
 	}
 	if action.ActionType == rgconst.MOVE {
 		if rgutils.WalkDist(bot.X, bot.Y, action.X, action.Y) != 1 {

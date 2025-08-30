@@ -29,7 +29,6 @@ function act(self, game)
         enemies = 0
         for location, bot in pairs(game.robots) do
             if bot.player_id ~= self.player_id then
-                print("test")
                 if 1 == rg.wdist(self.location, location) then
                     enemies = enemies + 1
                 end
@@ -50,8 +49,7 @@ function act(self, game)
         return friends
     end
 
-    num_enemies = num_enemies(self, game)
-    if num_enemies * 9 > self.hp then
+    if num_enemies(self, game) * 9 > self.hp then
         return { actionType=SUICIDE }
     end
 
